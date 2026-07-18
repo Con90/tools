@@ -1,0 +1,59 @@
+# searches.yaml — search definitions for pubmed_scraper.py
+#
+# Add, edit, disable, or remove searches here without touching the code.
+# Each search's `query` is passed straight to PubMed, so you can use the full
+# PubMed search syntax:
+#   * Field tags:  [Title/Abstract], [Title], [MeSH Terms], [Journal], [Author]
+#   * Booleans:    AND  OR  NOT   (uppercase)
+#   * Phrases:     wrap in "double quotes"
+# See: https://pubmed.ncbi.nlm.nih.gov/help/  (Search field descriptions)
+#
+# Run everything enabled below:      python3 pubmed_scraper.py
+# Run just one:                      python3 pubmed_scraper.py --search proteomics
+# Widen/narrow the window:           python3 pubmed_scraper.py --days 7
+
+defaults:
+  days: 30              # look back this many days (0 = no date limit)
+  max_results: 200      # cap per search
+  datetype: pdat        # pdat=publication date, edat=date added to PubMed
+  email: ""             # your email — NCBI asks callers to identify themselves
+
+searches:
+  # ---- single-cell RNA sequencing (the default ask) ---------------------- #
+  - name: scrnaseq
+    enabled: true
+    query: >-
+      "single cell RNA sequencing"[Title/Abstract]
+      OR "single-cell RNA-seq"[Title/Abstract]
+      OR "scRNA-seq"[Title/Abstract]
+      OR "single cell transcriptomics"[Title/Abstract]
+      OR "single-cell transcriptomics"[Title/Abstract]
+
+  # ---- scRNA-seq, but only within immunology ----------------------------- #
+  # Example of narrowing a topic to a field using MeSH terms.
+  - name: scrnaseq_immunology
+    enabled: false
+    query: >-
+      ("single cell RNA sequencing"[Title/Abstract]
+       OR "scRNA-seq"[Title/Abstract]
+       OR "single cell transcriptomics"[Title/Abstract])
+      AND ("Allergy and Immunology"[MeSH Terms]
+           OR "Immune System"[MeSH Terms]
+           OR immunology[Title/Abstract]
+           OR immune[Title/Abstract])
+
+  # ---- proteomics -------------------------------------------------------- #
+  - name: proteomics
+    enabled: false
+    query: >-
+      proteomics[Title/Abstract]
+      OR "mass spectrometry proteomics"[Title/Abstract]
+      OR "single cell proteomics"[Title/Abstract]
+
+  # ---- example: restrict a topic to specific journals -------------------- #
+  # Uncomment/enable and adjust to watch particular journals only.
+  # - name: scrnaseq_top_journals
+  #   enabled: false
+  #   query: >-
+  #     ("scRNA-seq"[Title/Abstract] OR "single cell transcriptomics"[Title/Abstract])
+  #     AND ("Nature"[Journal] OR "Cell"[Journal] OR "Nature Methods"[Journal])
