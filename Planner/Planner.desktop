@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Planner
+Comment=Simple daily/weekly planner
+Exec="/media/connor/Seagate Barracuda 1TB/ClaudeCode/Apps/Planner/run-planner.sh"
+Icon=x-office-calendar
+Terminal=false
+Categories=Office;Calendar;

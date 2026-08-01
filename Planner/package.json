@@ -1,0 +1,32 @@
+{
+  "name": "planner",
+  "version": "0.1.0",
+  "description": "A simple, elegant daily/weekly planner",
+  "main": "main.js",
+  "author": "Connor",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist:linux": "electron-builder --linux AppImage deb",
+    "dist:win": "electron-builder --win nsis",
+    "dist:mac": "electron-builder --mac dmg"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.connor.planner",
+    "productName": "Planner",
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "styles.css",
+      "renderer.js"
+    ],
+    "linux": {
+      "category": "Office"
+    }
+  }
+}

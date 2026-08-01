@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Planner</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">Planner</div>
+      <div class="nav">
+        <button id="btnPrev" class="icon-btn" title="Previous">&#8249;</button>
+        <button id="btnToday" class="pill-btn">Today</button>
+        <button id="btnNext" class="icon-btn" title="Next">&#8250;</button>
+        <div id="rangeLabel" class="range-label"></div>
+      </div>
+      <div class="topbar-right">
+        <div class="view-toggle" role="group">
+          <button id="btnDay" class="toggle-btn">3 days</button>
+          <button id="btnWeek" class="toggle-btn active">Week</button>
+        </div>
+        <button id="btnNew" class="primary-btn">+ New task</button>
+      </div>
+    </header>
+
+    <div class="calendar">
+      <div class="cal-head">
+        <div class="gutter-spacer"></div>
+        <div class="day-heads" id="dayHeads"></div>
+      </div>
+      <div class="cal-scroll" id="calScroll">
+        <div class="cal-body">
+          <div class="time-gutter" id="timeGutter"></div>
+          <div class="day-cols" id="dayCols"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint-bar">
+      Drag on the grid to create &middot; drag a task to move &middot; drag its bottom edge to resize &middot; <b>right-drag</b> to copy &middot; click to edit
+    </div>
+  </div>
+
+  <!-- Edit modal -->
+  <div class="modal-backdrop hidden" id="modalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h2 id="modalTitle">New task</h2>
+      <label class="field">
+        <span>Title</span>
+        <input type="text" id="fTitle" placeholder="e.g. Study finance" autocomplete="off" />
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>Date</span>
+          <input type="date" id="fDate" />
+        </label>
+        <label class="field">
+          <span>Start</span>
+          <input type="time" id="fStart" step="300" />
+        </label>
+      </div>
+      <label class="field">
+        <span>Duration (minutes)</span>
+        <input type="number" id="fDuration" min="5" max="1440" step="5" />
+        <div class="chips" id="durationChips">
+          <button data-min="15">15m</button>
+          <button data-min="20">20m</button>
+          <button data-min="30">30m</button>
+          <button data-min="45">45m</button>
+          <button data-min="60">1h</button>
+          <button data-min="90">1.5h</button>
+          <button data-min="120">2h</button>
+        </div>
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>Repeat</span>
+          <select id="fRepeat">
+            <option value="none">Does not repeat</option>
+            <option value="daily">Every day</option>
+            <option value="weekdays">Weekdays (Mon–Fri)</option>
+            <option value="weekly">Weekly</option>
+          </select>
+        </label>
+        <div class="field">
+          <span>Color</span>
+          <div class="swatches" id="fSwatches"></div>
+        </div>
+      </div>
+      <p class="repeat-note hidden" id="repeatNote">Repeating task — changes here apply to all occurrences.</p>
+      <div class="modal-actions">
+        <button id="btnDelete" class="danger-btn hidden">Delete</button>
+        <span class="spacer"></span>
+        <button id="btnCancel" class="ghost-btn">Cancel</button>
+        <button id="btnSave" class="primary-btn">Save</button>
+      </div>
+      <div class="confirm-row hidden" id="confirmRow">
+        <span>Delete repeating task:</span>
+        <button id="btnDelOne" class="ghost-btn">Only this day</button>
+        <button id="btnDelAll" class="danger-btn">Entire series</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
