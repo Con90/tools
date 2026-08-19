@@ -21,6 +21,7 @@
           <button id="btnDay" class="toggle-btn">3 days</button>
           <button id="btnWeek" class="toggle-btn active">Week</button>
         </div>
+        <button id="btnSyncOpen" class="pill-btn" title="Outlook sync">⇄ Sync<span id="syncDot" class="sync-dot hidden"></span></button>
         <button id="btnNew" class="primary-btn">+ New task</button>
       </div>
     </header>
@@ -80,6 +81,8 @@
           <select id="fRepeat">
             <option value="none">Does not repeat</option>
             <option value="daily">Every day</option>
+            <option value="every2days">Every other day</option>
+            <option value="every3days">Every 3rd day</option>
             <option value="weekdays">Weekdays (Mon–Fri)</option>
             <option value="weekly">Weekly</option>
           </select>
@@ -100,6 +103,54 @@
         <span>Delete repeating task:</span>
         <button id="btnDelOne" class="ghost-btn">Only this day</button>
         <button id="btnDelAll" class="danger-btn">Entire series</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sync modal -->
+  <div class="modal-backdrop hidden" id="syncBackdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h2>Outlook sync</h2>
+      <p class="sync-note" id="syncUnavailable" style="display:none">
+        Sync runs in the desktop app — start it with <code>npm start</code>.
+        This browser preview has no access to your Microsoft account.
+      </p>
+      <div id="syncSetup">
+        <label class="field">
+          <span>Azure app client ID</span>
+          <input type="text" id="fClientId" placeholder="e.g. 1b2c3d4e-…" autocomplete="off" spellcheck="false" />
+        </label>
+        <p class="sync-note">
+          One-time setup: portal.azure.com → App registrations → New registration →
+          account type "Any org directory + personal accounts" → Register.
+          Then Authentication → enable "Allow public client flows".
+          Paste the Application (client) ID above.
+        </p>
+        <div class="modal-actions">
+          <span class="spacer"></span>
+          <button id="btnConnect" class="primary-btn">Connect account</button>
+        </div>
+        <div id="deviceCodeBox" class="device-code hidden">
+          <p>Sign in with your Microsoft account:</p>
+          <div class="dc-code" id="dcCode"></div>
+          <p>Enter this code at <a href="#" id="dcLink" target="_blank"></a>, then wait — this dialog updates when the sign-in completes.</p>
+        </div>
+      </div>
+      <div id="syncConnected" class="hidden">
+        <p class="sync-connected-line">Connected as <b id="syncUser"></b></p>
+        <p class="sync-note">Tasks mirror into a calendar named <b>Planner</b> in that account.
+          Sync runs automatically a few seconds after every change.</p>
+        <p class="sync-note" id="syncLastLine"></p>
+        <div class="modal-actions">
+          <button id="btnDisconnect" class="danger-btn">Disconnect</button>
+          <span class="spacer"></span>
+          <button id="btnSyncNow" class="primary-btn">Sync now</button>
+        </div>
+      </div>
+      <p class="sync-error hidden" id="syncError"></p>
+      <div class="modal-actions">
+        <span class="spacer"></span>
+        <button id="btnSyncClose" class="ghost-btn">Close</button>
       </div>
     </div>
   </div>

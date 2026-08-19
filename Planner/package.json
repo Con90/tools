@@ -21,6 +21,7 @@
     "files": [
       "main.js",
       "preload.js",
+      "sync.js",
       "index.html",
       "styles.css",
       "renderer.js"
@@ -28,5 +29,8 @@
     "linux": {
       "category": "Office"
     }
+  },
+  "dependencies": {
+    "@azure/msal-node": "^5.4.3"
   }
 }

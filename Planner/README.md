@@ -19,7 +19,8 @@ Or double-click `Planner.desktop` / `run-planner.sh` (copies live on the Desktop
 - **Drag a task** to move it (across days too). **Right-drag** (or Alt-drag) to copy it.
 - **Drag the bottom edge** to resize (5-min snapping) — 20-minute tasks are fine.
 - **Click a task** to edit: title, date, start, duration (with quick chips), color, repeat.
-- **Repeats**: every day, weekdays (Mon–Fri), or weekly. Deleting a repeating task
+- **Repeats**: every day, every other day, every 3rd day, weekdays (Mon–Fri),
+  or weekly. Deleting a repeating task
   asks "only this day" or "entire series". Dragging a single occurrence detaches
   just that day.
 - Dark mode follows the system theme.
@@ -43,8 +44,31 @@ Tasks are stored as JSON in Electron's user-data folder
 ```
 
 `start`/`duration` are minutes; `exdates` are skipped occurrences of a repeating task.
-Stable IDs + this schema are designed so a future **Outlook sync** (Microsoft Graph
-`POST /me/events`, with `seriesMaster`/recurrence mapping) can mirror tasks 1:1.
+
+## Outlook sync
+
+One-way sync (Planner → Outlook) via Microsoft Graph. Tasks mirror into a
+calendar named **Planner** in the connected account, so they appear in Outlook
+on any device signed into that account (work PC, phone, web). Repeats map to
+native Outlook recurrences; deleted/changed tasks update automatically a few
+seconds after each edit. Tokens are stored encrypted (Electron `safeStorage`);
+the app never sees your password.
+
+One-time setup:
+
+1. Go to **portal.azure.com** (sign in with any Microsoft account) →
+   *App registrations* → *New registration*.
+2. Name it `Planner`; under *Supported account types* pick
+   **"Accounts in any organizational directory and personal Microsoft accounts"** → Register.
+3. In *Authentication* → *Advanced settings*, set **Allow public client flows** to *Yes* → Save.
+4. Copy the **Application (client) ID** into the app: **⇄ Sync** button → paste → *Connect account*.
+5. Enter the shown code at microsoft.com/devicelogin and sign in with the
+   account whose calendar should receive the tasks.
+
+If an organization (university/employer) blocks step 1 in its tenant, do the
+registration with a personal Microsoft account instead — step 2's account-type
+choice still lets you *connect* the org account afterwards (unless the org also
+blocks user consent for third-party apps; then IT approval is needed).
 
 ## Package installers
 

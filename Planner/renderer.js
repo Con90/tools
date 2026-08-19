@@ -89,6 +89,10 @@ function occursOn(task, dateKey) {
   const d = fromKey(dateKey);
   const dow = (d.getDay() + 6) % 7; // Mon=0
   if (freq === 'daily') return true;
+  if (freq === 'every2days' || freq === 'every3days') {
+    const gap = Math.round((d - fromKey(task.date)) / 86400000);
+    return gap % (freq === 'every2days' ? 2 : 3) === 0;
+  }
   if (freq === 'weekdays') return dow <= 4;
   if (freq === 'weekly') {
     const base = fromKey(task.date);
@@ -232,6 +236,7 @@ function buildEventEl(occ) {
   ev.style.color = dark ? c.dtext : c.text;
   ev.style.borderLeftColor = c.edge;
 
+  ev.title = `${t.title || '(untitled)'}\n${fmtTime(occ.start)} – ${fmtTime(occ.start + occ.duration)} · ${fmtDur(occ.duration)}`;
   const showTime = occ.duration >= 30;
   ev.innerHTML =
     `<div class="ev-title">${escapeHtml(t.title || '(untitled)')}</div>` +
@@ -554,6 +559,10 @@ el('durationChips').addEventListener('click', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const sb = document.getElementById('syncBackdrop');
+    if (sb && !sb.classList.contains('hidden')) sb.classList.add('hidden');
+  }
   if (e.key === 'Escape' && !backdrop.classList.contains('hidden')) closeModal();
   if (e.key === 'Enter' && !backdrop.classList.contains('hidden') && e.target.tagName !== 'SELECT') {
     el('btnSave').click();
@@ -561,17 +570,24 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ---------- Top bar ----------
+function resetScroll() {
+  calScroll.scrollTop = SCROLL_TO_HOUR * HOUR_PX - 6;
+}
+
 el('btnToday').addEventListener('click', () => {
   state.anchor = new Date();
   renderAll();
+  resetScroll();
 });
 el('btnPrev').addEventListener('click', () => {
-  state.anchor = addDays(state.anchor, state.view === 'week' ? -7 : -3);
+  state.anchor = addDays(state.anchor, state.view === 'week' ? -7 : -1);
   renderAll();
+  resetScroll();
 });
 el('btnNext').addEventListener('click', () => {
-  state.anchor = addDays(state.anchor, state.view === 'week' ? 7 : 3);
+  state.anchor = addDays(state.anchor, state.view === 'week' ? 7 : 1);
   renderAll();
+  resetScroll();
 });
 el('btnWeek').addEventListener('click', () => setView('week'));
 el('btnDay').addEventListener('click', () => setView('3day'));
@@ -589,6 +605,76 @@ el('btnNew').addEventListener('click', () => {
 });
 
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', renderAll);
+
+// ---------- Outlook sync UI ----------
+const syncBackdrop = el('syncBackdrop');
+const syncAPI = window.plannerAPI && window.plannerAPI.sync;
+
+function renderSyncStatus(s) {
+  el('syncDot').classList.toggle('hidden', !(s && s.connected));
+  if (!s) return;
+  el('syncSetup').classList.toggle('hidden', s.connected);
+  el('syncConnected').classList.toggle('hidden', !s.connected);
+  el('fClientId').value = s.clientId || '';
+  el('syncUser').textContent = s.username || '';
+  el('btnSyncNow').disabled = !!s.busy;
+  el('btnSyncNow').textContent = s.busy ? 'Syncing…' : 'Sync now';
+  const last = s.lastSync;
+  el('syncLastLine').textContent = last
+    ? `Last sync ${new Date(last.at).toLocaleString()} — ${last.created} added, ${last.updated} updated, ${last.deleted} removed.`
+    : 'Not synced yet.';
+  el('syncError').classList.toggle('hidden', !s.lastError);
+  el('syncError').textContent = s.lastError ? `Sync error: ${s.lastError}` : '';
+  if (s.connected) el('deviceCodeBox').classList.add('hidden');
+}
+
+el('btnSyncOpen').addEventListener('click', async () => {
+  syncBackdrop.classList.remove('hidden');
+  if (!syncAPI) {
+    el('syncUnavailable').style.display = '';
+    el('syncSetup').classList.add('hidden');
+    el('syncConnected').classList.add('hidden');
+    return;
+  }
+  renderSyncStatus(await syncAPI.getStatus());
+});
+
+el('btnSyncClose').addEventListener('click', () => syncBackdrop.classList.add('hidden'));
+syncBackdrop.addEventListener('pointerdown', (e) => {
+  if (e.target === syncBackdrop) syncBackdrop.classList.add('hidden');
+});
+
+if (syncAPI) {
+  syncAPI.onStatus(renderSyncStatus);
+
+  syncAPI.onDeviceCode((info) => {
+    el('deviceCodeBox').classList.remove('hidden');
+    el('dcCode').textContent = info.userCode;
+    const a = el('dcLink');
+    a.textContent = info.verificationUri;
+    a.href = info.verificationUri;
+  });
+
+  el('btnConnect').addEventListener('click', async () => {
+    el('syncError').classList.add('hidden');
+    try {
+      await syncAPI.setClientId(el('fClientId').value);
+      renderSyncStatus(await syncAPI.connect());
+    } catch (err) {
+      el('syncError').classList.remove('hidden');
+      el('syncError').textContent = `Connect failed: ${err.message.replace(/^.*Error invoking remote method '[^']+': (Error: )?/, '')}`;
+    }
+  });
+
+  el('btnDisconnect').addEventListener('click', async () => {
+    await syncAPI.disconnect();
+    renderSyncStatus(await syncAPI.getStatus());
+  });
+
+  el('btnSyncNow').addEventListener('click', () => syncAPI.now());
+
+  syncAPI.getStatus().then(renderSyncStatus);
+}
 
 // ---------- Init ----------
 (async function init() {

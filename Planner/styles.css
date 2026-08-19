@@ -438,4 +438,58 @@ body {
   font-size: 13px;
 }
 
+/* ---------- Sync ---------- */
+.sync-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #2f9e6e;
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+
+.sync-note {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.sync-note code {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.sync-connected-line { margin-bottom: 10px; }
+
+.device-code {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.device-code p { margin-bottom: 8px; color: var(--text-dim); }
+
+.dc-code {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-align: center;
+  margin: 10px 0;
+  user-select: text;
+}
+
+.device-code a { color: var(--accent); }
+
+.sync-error {
+  color: var(--danger);
+  font-size: 12.5px;
+  margin-top: 10px;
+  user-select: text;
+}
+
 .hidden { display: none !important; }
