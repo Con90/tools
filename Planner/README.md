@@ -34,7 +34,9 @@ re-run `install-desktop.sh`.
 - **Drag on empty grid** to create a task (15-min snapping), then name it in the dialog.
 - **Drag a task** to move it (across days too). **Right-drag** (or Alt-drag) to copy it.
 - **Drag the bottom edge** to resize (5-min snapping) — 20-minute tasks are fine.
-- **Click a task** to edit: title, date, start, duration (with quick chips), color, repeat.
+- **Click a task** to edit: title, date, start, duration (with quick chips), color, repeat, notes.
+- **Notes** (optional, free text) on any task. Tasks with notes show a ✎ badge;
+  hover the task to read them. Notes sync to the Outlook event's body.
 - **Repeats**: every day, every other day, every 3rd day, weekdays (Mon–Fri),
   or weekly. Deleting a repeating task
   asks "only this day" or "entire series". Dragging a single occurrence detaches
@@ -54,7 +56,8 @@ Tasks are stored as JSON in Electron's user-data folder
   "start": 540,
   "duration": 20,
   "color": "blue",
-  "repeat": "none | daily | weekdays | weekly",
+  "notes": "Chapters 4-5, bring the printed notes.",
+  "repeat": "none | daily | every2days | every3days | weekdays | weekly",
   "exdates": ["2026-08-05"]
 }
 ```

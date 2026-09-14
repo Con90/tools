@@ -236,12 +236,15 @@ function buildEventEl(occ) {
   ev.style.color = dark ? c.dtext : c.text;
   ev.style.borderLeftColor = c.edge;
 
-  ev.title = `${t.title || '(untitled)'}\n${fmtTime(occ.start)} – ${fmtTime(occ.start + occ.duration)} · ${fmtDur(occ.duration)}`;
+  const notes = (t.notes || '').trim();
+  ev.title = `${t.title || '(untitled)'}\n${fmtTime(occ.start)} – ${fmtTime(occ.start + occ.duration)} · ${fmtDur(occ.duration)}`
+    + (notes ? `\n\n${notes}` : '');
   const showTime = occ.duration >= 30;
+  const badges = ((t.repeat && t.repeat !== 'none') ? '⟳' : '') + (notes ? '✎' : '');
   ev.innerHTML =
     `<div class="ev-title">${escapeHtml(t.title || '(untitled)')}</div>` +
     (showTime ? `<div class="ev-time">${fmtTime(occ.start)} – ${fmtTime(occ.start + occ.duration)} · ${fmtDur(occ.duration)}</div>` : '') +
-    ((t.repeat && t.repeat !== 'none') ? `<div class="ev-repeat">⟳</div>` : '') +
+    (badges ? `<div class="ev-repeat">${badges}</div>` : '') +
     `<div class="resize-handle"></div>`;
   return ev;
 }
@@ -367,7 +370,8 @@ document.addEventListener('pointerup', (e) => {
     if (d.copy) {
       state.tasks.push({
         id: uid(), title: d.task.title, date: d.curDate, start: d.curStart,
-        duration: d.task.duration, color: d.task.color, repeat: 'none', exdates: []
+        duration: d.task.duration, color: d.task.color, repeat: 'none',
+        notes: d.task.notes || '', exdates: []
       });
     } else if (d.task.repeat && d.task.repeat !== 'none' && d.occDate !== d.task.date) {
       // Moving a non-base occurrence of a repeating task detaches just that day.
@@ -375,7 +379,8 @@ document.addEventListener('pointerup', (e) => {
       d.task.exdates.push(d.occDate);
       state.tasks.push({
         id: uid(), title: d.task.title, date: d.curDate, start: d.curStart,
-        duration: d.task.duration, color: d.task.color, repeat: 'none', exdates: []
+        duration: d.task.duration, color: d.task.color, repeat: 'none',
+        notes: d.task.notes || '', exdates: []
       });
     } else {
       d.task.date = d.curDate;
@@ -464,6 +469,7 @@ function openModal(opts) {
   el('fStart').value = fmtTime(task ? task.start : opts.start);
   el('fDuration').value = task ? task.duration : opts.duration;
   el('fRepeat').value = task ? (task.repeat || 'none') : 'none';
+  el('fNotes').value = task ? (task.notes || '') : '';
   selectedColor = task ? task.color : selectedColor;
   buildSwatches();
 
@@ -491,12 +497,13 @@ el('btnSave').addEventListener('click', () => {
   const start = parseTimeInput(el('fStart').value);
   const duration = Math.max(5, Math.min(parseInt(el('fDuration').value, 10) || 30, DAY_MIN));
   const repeat = el('fRepeat').value;
+  const notes = el('fNotes').value.trim();
 
   if (state.editing && state.editing.taskId) {
     const task = state.tasks.find((t) => t.id === state.editing.taskId);
-    if (task) Object.assign(task, { title, date, start, duration, color: selectedColor, repeat });
+    if (task) Object.assign(task, { title, date, start, duration, color: selectedColor, repeat, notes });
   } else {
-    state.tasks.push({ id: uid(), title, date, start, duration, color: selectedColor, repeat, exdates: [] });
+    state.tasks.push({ id: uid(), title, date, start, duration, color: selectedColor, repeat, notes, exdates: [] });
   }
   scheduleSave();
   closeModal();
@@ -564,7 +571,9 @@ document.addEventListener('keydown', (e) => {
     if (sb && !sb.classList.contains('hidden')) sb.classList.add('hidden');
   }
   if (e.key === 'Escape' && !backdrop.classList.contains('hidden')) closeModal();
-  if (e.key === 'Enter' && !backdrop.classList.contains('hidden') && e.target.tagName !== 'SELECT') {
+  // Enter saves, except in the notes box (and the repeat picker) where it types.
+  if (e.key === 'Enter' && !backdrop.classList.contains('hidden')
+      && e.target.tagName !== 'SELECT' && e.target.tagName !== 'TEXTAREA') {
     el('btnSave').click();
   }
 });

@@ -176,7 +176,8 @@ class SyncManager {
       subject: task.title || 'Untitled',
       start: { dateTime: `${task.date}T${hh(task.start)}:00`, timeZone: tz },
       end: { dateTime: `${task.date}T${hh(task.start + task.duration)}:00`, timeZone: tz },
-      isReminderOn: false
+      isReminderOn: false,
+      body: { contentType: 'text', content: (task.notes || '').trim() }
     };
     const freq = task.repeat || 'none';
     if (freq !== 'none') {
