@@ -24,7 +24,12 @@
       "sync.js",
       "index.html",
       "styles.css",
-      "renderer.js",
+      "core.js",
+      "calendar.js",
+      "board.js",
+      "modal.js",
+      "sync-ui.js",
+      "app.js",
       "build/icon.png"
     ],
     "linux": {

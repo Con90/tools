@@ -10,14 +10,18 @@
   <div class="app">
     <header class="topbar">
       <div class="brand">Planner</div>
-      <div class="nav">
+      <div class="tabs" role="tablist">
+        <button id="tabCalendar" class="tab-btn active">Calendar</button>
+        <button id="tabTasks" class="tab-btn">Tasks</button>
+      </div>
+      <div class="nav" id="calNav">
         <button id="btnPrev" class="icon-btn" title="Previous">&#8249;</button>
         <button id="btnToday" class="pill-btn">Today</button>
         <button id="btnNext" class="icon-btn" title="Next">&#8250;</button>
         <div id="rangeLabel" class="range-label"></div>
       </div>
       <div class="topbar-right">
-        <div class="view-toggle" role="group">
+        <div class="view-toggle" id="viewToggle" role="group">
           <button id="btnDay" class="toggle-btn">3 days</button>
           <button id="btnWeek" class="toggle-btn active">Week</button>
         </div>
@@ -26,7 +30,7 @@
       </div>
     </header>
 
-    <div class="calendar">
+    <div class="calendar" id="calendarView">
       <div class="cal-head">
         <div class="gutter-spacer"></div>
         <div class="day-heads" id="dayHeads"></div>
@@ -39,8 +43,17 @@
       </div>
     </div>
 
+    <div class="board-wrap hidden" id="boardView">
+      <div class="board" id="board"></div>
+    </div>
+
     <div class="hint-bar">
-      Drag on the grid to create &middot; drag a task to move &middot; drag its bottom edge to resize &middot; <b>right-drag</b> to copy &middot; click to edit
+      <span id="hintCalendar">
+        Drag on the grid to create &middot; drag a task to move &middot; drag its bottom edge to resize &middot; <b>right-drag</b> to copy &middot; click to edit
+      </span>
+      <span id="hintBoard" class="hidden">
+        Drag cards between sprints &middot; click a card to edit &middot; tick to complete &middot; <b>⋯</b> to schedule a card onto the calendar
+      </span>
     </div>
   </div>
 
@@ -54,28 +67,42 @@
       </label>
       <div class="field-row">
         <label class="field">
-          <span>Date</span>
-          <input type="date" id="fDate" />
+          <span>Sprint</span>
+          <select id="fSprint"></select>
         </label>
-        <label class="field">
-          <span>Start</span>
-          <input type="time" id="fStart" step="300" />
-        </label>
-      </div>
-      <label class="field">
-        <span>Duration (minutes)</span>
-        <input type="number" id="fDuration" min="5" max="1440" step="5" />
-        <div class="chips" id="durationChips">
-          <button data-min="15">15m</button>
-          <button data-min="20">20m</button>
-          <button data-min="30">30m</button>
-          <button data-min="45">45m</button>
-          <button data-min="60">1h</button>
-          <button data-min="90">1.5h</button>
-          <button data-min="120">2h</button>
+        <div class="field">
+          <span>Color</span>
+          <div class="swatches" id="fSwatches"></div>
         </div>
+      </div>
+      <label class="check-row">
+        <input type="checkbox" id="chkScheduled" />
+        <span>Schedule on calendar</span>
       </label>
-      <div class="field-row">
+      <div id="scheduleFields">
+        <div class="field-row">
+          <label class="field">
+            <span>Date</span>
+            <input type="date" id="fDate" />
+          </label>
+          <label class="field">
+            <span>Start</span>
+            <input type="time" id="fStart" step="300" />
+          </label>
+        </div>
+        <label class="field">
+          <span>Duration (minutes)</span>
+          <input type="number" id="fDuration" min="5" max="1440" step="5" />
+          <div class="chips" id="durationChips">
+            <button data-min="15">15m</button>
+            <button data-min="20">20m</button>
+            <button data-min="30">30m</button>
+            <button data-min="45">45m</button>
+            <button data-min="60">1h</button>
+            <button data-min="90">1.5h</button>
+            <button data-min="120">2h</button>
+          </div>
+        </label>
         <label class="field">
           <span>Repeat</span>
           <select id="fRepeat">
@@ -87,10 +114,6 @@
             <option value="weekly">Weekly</option>
           </select>
         </label>
-        <div class="field">
-          <span>Color</span>
-          <div class="swatches" id="fSwatches"></div>
-        </div>
       </div>
       <label class="field">
         <span>Notes <em class="optional">optional</em></span>
@@ -159,6 +182,11 @@
     </div>
   </div>
 
-  <script src="renderer.js"></script>
+  <script src="core.js"></script>
+  <script src="calendar.js"></script>
+  <script src="board.js"></script>
+  <script src="modal.js"></script>
+  <script src="sync-ui.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

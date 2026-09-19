@@ -221,7 +221,11 @@ class SyncManager {
     }, delayMs);
   }
 
-  async syncNow(tasks) {
+  async syncNow(allTasks) {
+    // Board-only tasks have no date; they are not calendar events. A task
+    // that loses its schedule therefore disappears from the incoming list
+    // and gets removed from Outlook by the sweep below.
+    const tasks = (allTasks || []).filter((t) => t.date);
     if (this.busy) return this.status();
     this.busy = true;
     this.lastError = null;

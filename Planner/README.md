@@ -29,6 +29,11 @@ re-run `install-desktop.sh`.
 
 ## Features
 
+Two tabs over one set of tasks: **Calendar** (time blocking) and **Tasks**
+(sprint board).
+
+### Calendar
+
 - **Week view** (default) and **3-day view**; navigate with ‹ / › / Today.
 - 24-hour grid, auto-scrolled to the 08:00–18:00 window on launch.
 - **Drag on empty grid** to create a task (15-min snapping), then name it in the dialog.
@@ -43,6 +48,32 @@ re-run `install-desktop.sh`.
   just that day.
 - Dark mode follows the system theme.
 
+### Tasks board
+
+- Columns are a permanent **Backlog** plus any **sprints** you create
+  (`+ Add sprint`; rename or delete one from its ⋯ menu — deleting a sprint
+  moves its cards back to the Backlog rather than deleting them).
+- **Drag cards** between sprints and reorder within a column.
+- **Tick** a card to complete it (completed tasks show struck through on the
+  calendar too); **click** a card to edit it; **⋯** for per-card actions.
+
+### Moving between the two
+
+A task is a single record with two optional placements: a *schedule*
+(date/time → appears on the Calendar) and a *sprint* (→ appears on the board).
+It can have either or both, so nothing is ever copied or kept in step:
+
+- **Calendar → Tasks**: open the event and pick a **Sprint**.
+- **Tasks → Calendar**: card ⋯ → **Send to calendar…**, or tick
+  **Schedule on calendar** in the dialog.
+- A card that is also scheduled shows a 📅 date badge; a calendar event that is
+  also on the board shows a ▦ badge.
+- `Remove from board` (card ⋯) drops the sprint but keeps the calendar entry.
+  A task that is neither scheduled nor in a sprint would be invisible, so it
+  falls back to the Backlog.
+
+Only scheduled tasks are sent to Outlook; board-only tasks stay local.
+
 ## Data
 
 Tasks are stored as JSON in Electron's user-data folder
@@ -50,19 +81,49 @@ Tasks are stored as JSON in Electron's user-data folder
 
 ```json
 {
-  "id": "…",
-  "title": "Study finance",
-  "date": "2026-08-01",
-  "start": 540,
-  "duration": 20,
-  "color": "blue",
-  "notes": "Chapters 4-5, bring the printed notes.",
-  "repeat": "none | daily | every2days | every3days | weekdays | weekly",
-  "exdates": ["2026-08-05"]
+  "version": 2,
+  "sprints": [{ "id": "…", "name": "Sprint 1" }],
+  "tasks": [{
+    "id": "…",
+    "title": "Study finance",
+    "date": "2026-08-01",
+    "start": 540,
+    "duration": 20,
+    "color": "blue",
+    "notes": "Chapters 4-5, bring the printed notes.",
+    "repeat": "none | daily | every2days | every3days | weekdays | weekly",
+    "exdates": ["2026-08-05"],
+    "sprintId": "backlog | <sprint id> | null",
+    "order": 0,
+    "done": false
+  }]
 }
 ```
 
-`start`/`duration` are minutes; `exdates` are skipped occurrences of a repeating task.
+`start`/`duration` are minutes; `exdates` are skipped occurrences of a repeating
+task. `date: null` means the task is not scheduled (board-only); `sprintId: null`
+means it is not on the board. Files written before the board existed load
+unchanged — the missing fields default on load.
+
+## Code layout
+
+Plain scripts, no framework and no build step, loaded in order by `index.html`:
+
+| File | Role |
+|------|------|
+| `core.js` | constants, date helpers, shared `state`, storage, recurrence |
+| `calendar.js` | time grid rendering and its drag interactions |
+| `board.js` | sprint columns, card drag-and-drop, menus |
+| `modal.js` | the task dialog shared by both views |
+| `sync-ui.js` | Outlook sync panel |
+| `app.js` | tab switching, top bar, startup |
+| `main.js` / `preload.js` / `sync.js` | Electron main process, IPC bridge, Graph sync |
+
+Notes on keeping it light: the hidden tab's DOM is dropped on switch rather
+than kept alive; listeners are delegated per container instead of per card or
+per event; a card drag re-inserts the dragged node itself rather than
+re-rendering the board; writes are debounced and the whole file is rewritten
+atomically (temp file + rename).
 
 ## Outlook sync
 

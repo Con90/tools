@@ -12,7 +12,7 @@ function loadTasks() {
   try {
     return JSON.parse(fs.readFileSync(dataFile(), 'utf8'));
   } catch {
-    return { version: 1, tasks: [] };
+    return { version: 2, tasks: [], sprints: [] };
   }
 }
 
