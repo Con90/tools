@@ -57,13 +57,32 @@
           </label>
         </div>
         <fieldset>
-          <legend>Shop from</legend>
-          <label class="check"><input type="checkbox" name="sections" value="womens"> Womenswear</label>
-          <label class="check"><input type="checkbox" name="sections" value="mens"> Menswear</label>
-          <label class="check"><input type="checkbox" name="sections" value="unisex"> Unisex</label>
+          <legend>I shop for</legend>
+          <div class="segmented" role="radiogroup">
+            <label><input type="radio" name="gender" value="female"> Women's clothing</label>
+            <label><input type="radio" name="gender" value="male"> Men's clothing</label>
+          </div>
+          <label class="check"><input type="checkbox" name="also-other"> <span id="also-other-label">Also show the other section</span></label>
         </fieldset>
+
         <fieldset>
+          <legend>How do you want to describe your size?</legend>
+          <div class="segmented" role="radiogroup">
+            <label><input type="radio" name="mode" value="quick"> Quick: my usual sizes</label>
+            <label><input type="radio" name="mode" value="detailed"> Detailed: my measurements</label>
+          </div>
+        </fieldset>
+
+        <fieldset id="quick-fields">
+          <legend>Usual sizes</legend>
+          <p class="hint full">Pick the sizes you normally buy, in whichever system you know (UK, EU, US or S/M/L).
+            Measurements are estimated from these, so results are a good guide rather than exact.</p>
+          <div id="usual-grid" class="usual-grid"></div>
+        </fieldset>
+
+        <fieldset id="detailed-fields">
           <legend>Measurements <span class="unit-label"></span></legend>
+          <p class="hint full">Fill in what you can. Anything left blank is estimated from your usual sizes, if you've set them.</p>
           <div id="measure-grid" class="grid"></div>
           <details class="hint">
             <summary>How to measure</summary>
@@ -74,6 +93,7 @@
               <li><b>Inside leg:</b> from crotch to ankle bone, along the inner leg.</li>
               <li><b>Shoulder:</b> across the back, shoulder point to shoulder point.</li>
               <li><b>Sleeve:</b> from shoulder point, over a slightly bent elbow, to the wrist.</li>
+              <li><b>Foot length:</b> stand on paper with your heel against a wall; mark your longest toe and measure. Use your longer foot, measured in the evening.</li>
             </ul>
             Measure over thin clothing; keep the tape snug, not tight.
           </details>
@@ -108,6 +128,7 @@
               </select>
             </label>
             <label>Garment <select name="garment" id="chart-garment"></select></label>
+            <label>Size labels are <select name="size_system" id="chart-system"></select></label>
           </div>
           <div class="row">
             <label class="grow">Size guide link <input name="source_url" type="url" placeholder="https://"></label>
@@ -123,10 +144,12 @@
           <table class="editor"><thead id="sizes-head"></thead><tbody id="sizes-body"></tbody></table>
           <button type="button" id="size-add" class="secondary small">+ Add size</button>
 
+<div id="lengths-block">
           <h3>Lengths <span class="muted">(optional, for leg lengths like Short / Regular / Long)</span></h3>
           <table class="editor"><thead><tr><th>Label</th><th>Inside leg</th><th></th></tr></thead>
             <tbody id="lengths-body"></tbody></table>
           <button type="button" id="length-add" class="secondary small">+ Add length</button>
+          </div>
 
           <p id="chart-error" class="error" hidden></p>
           <div class="actions">

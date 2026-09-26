@@ -29,6 +29,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   margin: 0;
   font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -58,7 +59,6 @@ button {
 button.secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
 button.danger { background: none; color: var(--poor); border-color: var(--border); }
 button.small { padding: 4px 10px; font-size: 13px; }
-button[hidden] { display: none; }
 
 input, select {
   font: inherit; color: var(--text); background: var(--surface);
@@ -88,12 +88,33 @@ details summary { cursor: pointer; }
 .error { color: var(--poor); }
 code { background: var(--bg); padding: 1px 5px; border-radius: 4px; }
 
+/* segmented radio control */
+.segmented { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--border); border-radius: 9px; padding: 3px; gap: 2px; background: var(--bg); }
+.segmented label { flex-direction: row; align-items: center; color: var(--muted); font-size: 14px; font-weight: 500;
+  padding: 5px 12px; border-radius: 7px; cursor: pointer; }
+.segmented input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.segmented label:has(input:checked) { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+.segmented label:has(input:focus-visible) { outline: 2px solid var(--accent); }
+.segmented.small label { padding: 3px 9px; font-size: 13px; }
+fieldset > .segmented { flex: none; }
+fieldset > .segmented + label.check { flex-basis: 100%; }
+.full { flex-basis: 100%; margin: 0; font-size: 14px; }
+
+/* usual sizes */
+.usual-grid { display: grid; gap: 10px; width: 100%; }
+.usual-row { display: grid; grid-template-columns: 130px max-content 120px 140px; justify-content: start; gap: 10px; align-items: center; }
+.usual-label { font-weight: 500; }
+.usual-row > .segmented { width: fit-content; }
+
 /* results */
 .results { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .result header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .result h3 { margin: 0; font-size: 16px; }
 .result .big { font-size: 28px; font-weight: 700; line-height: 1; }
 .result .size { text-align: right; }
+.result .sys { font-size: 14px; font-weight: 600; color: var(--muted); margin-right: 3px; }
+.equivalents { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+.estimate { margin: 12px 0 0; font-size: 13px; color: var(--muted); font-style: italic; }
 .result .length { display: block; white-space: nowrap; font-size: 13px; color: var(--muted); margin-top: 4px; }
 .badge { display: inline-block; margin: 10px 0 4px; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
 .v-great .badge { color: var(--great); background: color-mix(in srgb, var(--great) 14%, transparent); }
@@ -132,6 +153,8 @@ table.editor td:last-child { min-width: 0; }
 .remove { background: none; color: var(--muted); padding: 2px 8px; font-size: 18px; }
 
 @media (max-width: 600px) {
+  .usual-row { grid-template-columns: 1fr 1fr; }
+  .usual-row .usual-label, .usual-row > .segmented { grid-column: 1 / -1; }
   body > header { padding: 12px 16px; }
   nav { order: 3; flex-basis: 100%; }
   .toolbar label { min-width: 0; flex: 1; }

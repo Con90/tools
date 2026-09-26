@@ -11,6 +11,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
 from . import db
+from .conversions import MENS_LENGTHS, SYSTEMS, WOMENS_LENGTHS, size_options
+from .estimate import USUAL_CATEGORIES, body_for
 from .sizing import FIT_OFFSETS, GARMENTS, MEASUREMENTS, SECTIONS, match_all
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
@@ -19,6 +21,8 @@ app = FastAPI(title="Stylist")
 
 Section = Literal["womens", "mens", "unisex"]
 Fit = Literal["slim", "regular", "relaxed"]
+Gender = Literal["female", "male"]
+System = Literal["UK", "EU", "US", "Letter", "W", "Other"]
 Range = list[float] | float
 
 
@@ -31,13 +35,30 @@ def _check_measurements(values: dict[str, float]) -> dict[str, float]:
     return values
 
 
+class UsualSize(BaseModel):
+    system: System
+    size: str = Field(min_length=1, max_length=12)
+    length: str | None = Field(default=None, max_length=12)
+
+
 class ProfileIn(BaseModel):
     name: str = Field(min_length=1, max_length=80)
-    sections: list[Section] = ["womens", "mens", "unisex"]
+    gender: Gender = "female"
+    sections: list[Section] = ["womens", "unisex"]
     fit: Fit = "regular"
+    mode: Literal["quick", "detailed"] = "quick"
     measurements: dict[str, float] = {}
+    usual_sizes: dict[str, UsualSize] = {}
 
     _valid = field_validator("measurements")(_check_measurements)
+
+    @field_validator("usual_sizes")
+    @classmethod
+    def _usual(cls, v):
+        for key in v:
+            if key not in USUAL_CATEGORIES:
+                raise ValueError(f"unknown size category '{key}'")
+        return v
 
 
 class Size(BaseModel):
@@ -64,6 +85,7 @@ class ChartIn(BaseModel):
     brand: str = Field(min_length=1, max_length=80)
     section: Section
     garment: str
+    size_system: System = "Other"
     notes: str = ""
     source_url: str = ""
     sizes: list[Size] = Field(min_length=1)
@@ -90,6 +112,15 @@ def meta():
         "garments": {k: {"label": label, "measurements": list(weights)} for k, (label, weights) in GARMENTS.items()},
         "sections": SECTIONS,
         "fits": list(FIT_OFFSETS),
+        "size_systems": SYSTEMS,
+        "usual_categories": {k: label for k, (label, _) in USUAL_CATEGORIES.items()},
+        # Choices for the quick-mode form: gender → category → system → labels.
+        "size_options": {
+            g: {cat: size_options(g, "shoes" if cat == "shoes" else "bottoms" if cat == "bottoms" else "clothing")
+                for cat in USUAL_CATEGORIES if not (g == "male" and cat == "dresses")}
+            for g in ("female", "male")
+        },
+        "lengths": {"female": WOMENS_LENGTHS, "male": MENS_LENGTHS},
     }
 
 
@@ -156,8 +187,9 @@ def match(profile_id: int, garment: str, fit: Fit | None = None):
     if garment not in GARMENTS:
         raise HTTPException(400, f"unknown garment type '{garment}'")
     profile = _found(db.get_row("profiles", profile_id))
-    return match_all(db.list_rows("size_charts"), profile["measurements"], garment,
-                     fit or profile["fit"], profile["sections"])
+    body, sources = body_for(profile, garment)
+    return match_all(db.list_rows("size_charts"), body, garment, fit or profile["fit"],
+                     profile["sections"], profile["gender"], sources)
 
 
 # --- front end -------------------------------------------------------------

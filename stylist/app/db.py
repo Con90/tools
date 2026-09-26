@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
@@ -19,9 +20,12 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS profiles (
     id           INTEGER PRIMARY KEY,
     name         TEXT NOT NULL,
-    sections     TEXT NOT NULL DEFAULT '["womens","mens","unisex"]',
+    gender       TEXT NOT NULL DEFAULT 'female',
+    sections     TEXT NOT NULL DEFAULT '["womens","unisex"]',
     fit          TEXT NOT NULL DEFAULT 'regular',
+    mode         TEXT NOT NULL DEFAULT 'quick',
     measurements TEXT NOT NULL DEFAULT '{}',
+    usual_sizes  TEXT NOT NULL DEFAULT '{}',
     updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS size_charts (
@@ -29,6 +33,7 @@ CREATE TABLE IF NOT EXISTS size_charts (
     brand      TEXT NOT NULL,
     section    TEXT NOT NULL,
     garment    TEXT NOT NULL,
+    size_system TEXT NOT NULL DEFAULT 'Other',
     notes      TEXT NOT NULL DEFAULT '',
     source_url TEXT NOT NULL DEFAULT '',
     sizes      TEXT NOT NULL DEFAULT '[]',
@@ -37,7 +42,7 @@ CREATE TABLE IF NOT EXISTS size_charts (
 );
 """
 
-PROFILE_JSON = ("sections", "measurements")
+PROFILE_JSON = ("sections", "measurements", "usual_sizes")
 CHART_JSON = ("sizes", "lengths")
 
 
@@ -45,7 +50,7 @@ def db_path() -> Path:
     return Path(os.environ.get("STYLIST_DB", DEFAULT_DB))
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 def connect() -> sqlite3.Connection:
@@ -59,7 +64,7 @@ def connect() -> sqlite3.Connection:
 
 
 def _initialise(conn: sqlite3.Connection) -> None:
-    """Create tables and seed starter charts exactly once.
+    """Create or upgrade tables and seed starter charts exactly once.
 
     Several requests can open a brand-new database at the same moment, so the
     check-and-seed runs under a write lock with the version kept in the file.
@@ -68,12 +73,15 @@ def _initialise(conn: sqlite3.Connection) -> None:
         return
     conn.execute("BEGIN IMMEDIATE")
     try:
-        if conn.execute("PRAGMA user_version").fetchone()[0] < SCHEMA_VERSION:
+        version = conn.execute("PRAGMA user_version").fetchone()[0]
+        if version == 0:
             for statement in SCHEMA.split(";"):
                 if statement.strip():
                     conn.execute(statement)
             _seed(conn)
-            conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+        elif version == 1:
+            _migrate_v2(conn)
+        conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
         conn.execute("COMMIT")
     except BaseException:
         conn.execute("ROLLBACK")
@@ -92,10 +100,38 @@ def session():
 
 
 def _seed(conn: sqlite3.Connection) -> None:
-    """Load the starter size charts into a brand-new database."""
-    charts = json.loads((APP_DIR / "starter_charts.json").read_text())
-    for chart in charts:
-        _insert(conn, "size_charts", chart, CHART_JSON)
+    """Load starter size charts, skipping any brand/section/garment already present."""
+    have = {tuple(r) for r in conn.execute("SELECT brand, section, garment FROM size_charts")}
+    for chart in json.loads((APP_DIR / "starter_charts.json").read_text()):
+        if (chart["brand"], chart["section"], chart["garment"]) not in have:
+            _insert(conn, "size_charts", chart, CHART_JSON)
+
+
+def _migrate_v2(conn: sqlite3.Connection) -> None:
+    """v1 → v2: gender, quick mode and usual sizes on profiles; size systems on charts."""
+    conn.execute("ALTER TABLE profiles ADD COLUMN gender TEXT NOT NULL DEFAULT 'female'")
+    # Existing profiles were built from measurements, so keep them in detailed mode.
+    conn.execute("ALTER TABLE profiles ADD COLUMN mode TEXT NOT NULL DEFAULT 'detailed'")
+    conn.execute("ALTER TABLE profiles ADD COLUMN usual_sizes TEXT NOT NULL DEFAULT '{}'")
+    conn.execute("ALTER TABLE size_charts ADD COLUMN size_system TEXT NOT NULL DEFAULT 'Other'")
+    for pid, sections in conn.execute("SELECT id, sections FROM profiles").fetchall():
+        if "mens" in json.loads(sections) and "womens" not in json.loads(sections):
+            conn.execute("UPDATE profiles SET gender = 'male' WHERE id = ?", (pid,))
+    for cid, sizes in conn.execute("SELECT id, sizes FROM size_charts").fetchall():
+        conn.execute("UPDATE size_charts SET size_system = ? WHERE id = ?",
+                     (guess_size_system([s["label"] for s in json.loads(sizes)]), cid))
+    _seed(conn)  # adds the new starter shoe charts
+
+
+def guess_size_system(labels: list[str]) -> str:
+    labels = [str(l).strip().upper() for l in labels]
+    if labels and all(re.fullmatch(r"W\d+", l) for l in labels):
+        return "W"
+    if labels and all(re.fullmatch(r"(X*S|M|X*L|\dXL)", l) for l in labels):
+        return "Letter"
+    if labels and all(re.fullmatch(r"\d+(\.\d+)?", l) for l in labels):
+        return "UK" if max(float(l) for l in labels) < 30 else "EU"
+    return "Other"
 
 
 def _row(row: sqlite3.Row | None, json_cols) -> dict | None:

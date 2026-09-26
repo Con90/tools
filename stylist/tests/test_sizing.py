@@ -84,3 +84,29 @@ def test_match_all_filters_and_ranks():
     trousers = dict(TOPS, brand="Delta", garment="bottoms")
     results = match_all([bad, good, womens, trousers], {"chest": 97}, "tops", sections=["mens"])
     assert [r["brand"] for r in results] == ["Alpha", "Beta"]
+
+
+SHOES = {"brand": "S", "section": "womens", "garment": "shoes", "size_system": "UK",
+         "sizes": [{"label": "5", "ranges": {"foot_length": [23.7, 24.1]}},
+                   {"label": "5.5", "ranges": {"foot_length": [24.1, 24.5]}}]}
+
+
+def test_shoe_notes_use_millimetre_precision():
+    r = match_chart(SHOES, {"foot_length": 25.0})
+    assert r["size"] == "5.5"
+    assert r["details"][0]["note"] == "tight by 0.5 cm"
+
+
+def test_estimated_measurements_are_flagged():
+    r = match_chart(TOPS, {"chest": 97}, sources={"chest": "your usual tops size M"})
+    assert r["estimated"]
+    assert r["details"][0]["estimated_from"] == "your usual tops size M"
+
+
+def test_estimates_do_not_overrule_measurements():
+    body = {"chest": 97, "waist": 89}  # chest measured (M), waist guessed (L)
+    r = match_chart(TOPS, body, sources={"waist": "your usual tops size L"})
+    assert r["size"] == "M"
+    assert r["verdict"] == "great"
+    waist = next(d for d in r["details"] if d["measurement"] == "waist")
+    assert waist["status"] == "tight"  # still shown honestly

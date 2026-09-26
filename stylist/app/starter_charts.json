@@ -3,97 +3,176 @@
     "brand": "Generic UK (starter)",
     "section": "womens",
     "garment": "tops",
+    "size_system": "UK",
     "notes": "Approximate UK high-street sizing to get you started. Replace with real brand charts.",
     "sizes": [
-      {"label": "6",  "ranges": {"chest": [76, 80],  "waist": [58, 62]}},
-      {"label": "8",  "ranges": {"chest": [80, 84],  "waist": [62, 66]}},
-      {"label": "10", "ranges": {"chest": [84, 88],  "waist": [66, 70]}},
-      {"label": "12", "ranges": {"chest": [88, 93],  "waist": [70, 75]}},
-      {"label": "14", "ranges": {"chest": [93, 98],  "waist": [75, 80]}},
+      {"label": "4", "ranges": {"chest": [72, 76], "waist": [54, 58]}},
+      {"label": "6", "ranges": {"chest": [76, 80], "waist": [58, 62]}},
+      {"label": "8", "ranges": {"chest": [80, 84], "waist": [62, 66]}},
+      {"label": "10", "ranges": {"chest": [84, 88], "waist": [66, 70]}},
+      {"label": "12", "ranges": {"chest": [88, 93], "waist": [70, 75]}},
+      {"label": "14", "ranges": {"chest": [93, 98], "waist": [75, 80]}},
       {"label": "16", "ranges": {"chest": [98, 103], "waist": [80, 85]}},
-      {"label": "18", "ranges": {"chest": [103, 108], "waist": [85, 90]}}
+      {"label": "18", "ranges": {"chest": [103, 108], "waist": [85, 90]}},
+      {"label": "20", "ranges": {"chest": [108, 113], "waist": [90, 95]}},
+      {"label": "22", "ranges": {"chest": [113, 118], "waist": [95, 100]}},
+      {"label": "24", "ranges": {"chest": [118, 123], "waist": [100, 105]}}
     ]
   },
   {
     "brand": "Generic UK (starter)",
     "section": "womens",
     "garment": "dresses",
+    "size_system": "UK",
     "notes": "Approximate UK high-street sizing to get you started. Replace with real brand charts.",
     "sizes": [
-      {"label": "6",  "ranges": {"chest": [76, 80],  "waist": [58, 62], "hips": [84, 88]}},
-      {"label": "8",  "ranges": {"chest": [80, 84],  "waist": [62, 66], "hips": [88, 92]}},
-      {"label": "10", "ranges": {"chest": [84, 88],  "waist": [66, 70], "hips": [92, 96]}},
-      {"label": "12", "ranges": {"chest": [88, 93],  "waist": [70, 75], "hips": [96, 101]}},
-      {"label": "14", "ranges": {"chest": [93, 98],  "waist": [75, 80], "hips": [101, 106]}},
+      {"label": "4", "ranges": {"chest": [72, 76], "waist": [54, 58], "hips": [80, 84]}},
+      {"label": "6", "ranges": {"chest": [76, 80], "waist": [58, 62], "hips": [84, 88]}},
+      {"label": "8", "ranges": {"chest": [80, 84], "waist": [62, 66], "hips": [88, 92]}},
+      {"label": "10", "ranges": {"chest": [84, 88], "waist": [66, 70], "hips": [92, 96]}},
+      {"label": "12", "ranges": {"chest": [88, 93], "waist": [70, 75], "hips": [96, 101]}},
+      {"label": "14", "ranges": {"chest": [93, 98], "waist": [75, 80], "hips": [101, 106]}},
       {"label": "16", "ranges": {"chest": [98, 103], "waist": [80, 85], "hips": [106, 111]}},
-      {"label": "18", "ranges": {"chest": [103, 108], "waist": [85, 90], "hips": [111, 116]}}
+      {"label": "18", "ranges": {"chest": [103, 108], "waist": [85, 90], "hips": [111, 116]}},
+      {"label": "20", "ranges": {"chest": [108, 113], "waist": [90, 95], "hips": [116, 121]}},
+      {"label": "22", "ranges": {"chest": [113, 118], "waist": [95, 100], "hips": [121, 126]}},
+      {"label": "24", "ranges": {"chest": [118, 123], "waist": [100, 105], "hips": [126, 131]}}
     ]
   },
   {
     "brand": "Generic UK (starter)",
     "section": "womens",
     "garment": "bottoms",
+    "size_system": "UK",
     "notes": "Approximate UK high-street sizing to get you started. Replace with real brand charts.",
     "sizes": [
-      {"label": "6",  "ranges": {"waist": [58, 62], "hips": [84, 88]}},
-      {"label": "8",  "ranges": {"waist": [62, 66], "hips": [88, 92]}},
+      {"label": "4", "ranges": {"waist": [54, 58], "hips": [80, 84]}},
+      {"label": "6", "ranges": {"waist": [58, 62], "hips": [84, 88]}},
+      {"label": "8", "ranges": {"waist": [62, 66], "hips": [88, 92]}},
       {"label": "10", "ranges": {"waist": [66, 70], "hips": [92, 96]}},
       {"label": "12", "ranges": {"waist": [70, 75], "hips": [96, 101]}},
       {"label": "14", "ranges": {"waist": [75, 80], "hips": [101, 106]}},
       {"label": "16", "ranges": {"waist": [80, 85], "hips": [106, 111]}},
-      {"label": "18", "ranges": {"waist": [85, 90], "hips": [111, 116]}}
+      {"label": "18", "ranges": {"waist": [85, 90], "hips": [111, 116]}},
+      {"label": "20", "ranges": {"waist": [90, 95], "hips": [116, 121]}},
+      {"label": "22", "ranges": {"waist": [95, 100], "hips": [121, 126]}},
+      {"label": "24", "ranges": {"waist": [100, 105], "hips": [126, 131]}}
     ],
     "lengths": [
-      {"label": "Short",   "inseam": [71, 76]},
+      {"label": "Short", "inseam": [71, 76]},
       {"label": "Regular", "inseam": [76, 81]},
-      {"label": "Long",    "inseam": [81, 86]}
+      {"label": "Long", "inseam": [81, 86]}
     ]
   },
   {
     "brand": "Generic (starter)",
     "section": "mens",
     "garment": "tops",
+    "size_system": "Letter",
     "notes": "Approximate letter sizing to get you started. Replace with real brand charts.",
     "sizes": [
-      {"label": "XS",  "ranges": {"chest": [82, 88],   "waist": [68, 74]}},
-      {"label": "S",   "ranges": {"chest": [88, 94],   "waist": [74, 80]}},
-      {"label": "M",   "ranges": {"chest": [94, 100],  "waist": [80, 86]}},
-      {"label": "L",   "ranges": {"chest": [100, 106], "waist": [86, 92]}},
-      {"label": "XL",  "ranges": {"chest": [106, 112], "waist": [92, 98]}},
-      {"label": "XXL", "ranges": {"chest": [112, 118], "waist": [98, 104]}}
+      {"label": "XS", "ranges": {"chest": [82, 88], "waist": [68, 74]}},
+      {"label": "S", "ranges": {"chest": [88, 94], "waist": [74, 80]}},
+      {"label": "M", "ranges": {"chest": [94, 100], "waist": [80, 86]}},
+      {"label": "L", "ranges": {"chest": [100, 106], "waist": [86, 92]}},
+      {"label": "XL", "ranges": {"chest": [106, 112], "waist": [92, 98]}},
+      {"label": "XXL", "ranges": {"chest": [112, 118], "waist": [98, 104]}},
+      {"label": "XXXL", "ranges": {"chest": [118, 124], "waist": [104, 110]}}
     ]
   },
   {
     "brand": "Generic (starter)",
     "section": "mens",
     "garment": "outerwear",
+    "size_system": "Letter",
     "notes": "Approximate letter sizing to get you started. Replace with real brand charts.",
     "sizes": [
-      {"label": "XS",  "ranges": {"chest": [82, 88]}},
-      {"label": "S",   "ranges": {"chest": [88, 94]}},
-      {"label": "M",   "ranges": {"chest": [94, 100]}},
-      {"label": "L",   "ranges": {"chest": [100, 106]}},
-      {"label": "XL",  "ranges": {"chest": [106, 112]}},
-      {"label": "XXL", "ranges": {"chest": [112, 118]}}
+      {"label": "XS", "ranges": {"chest": [82, 88]}},
+      {"label": "S", "ranges": {"chest": [88, 94]}},
+      {"label": "M", "ranges": {"chest": [94, 100]}},
+      {"label": "L", "ranges": {"chest": [100, 106]}},
+      {"label": "XL", "ranges": {"chest": [106, 112]}},
+      {"label": "XXL", "ranges": {"chest": [112, 118]}},
+      {"label": "XXXL", "ranges": {"chest": [118, 124]}}
     ]
   },
   {
     "brand": "Generic (starter)",
     "section": "mens",
     "garment": "bottoms",
-    "notes": "Waist-size trousers (W28–W38). Approximate; replace with real brand charts.",
+    "size_system": "W",
+    "notes": "Waist-size trousers (W28\u2013W40). Approximate; replace with real brand charts.",
     "sizes": [
-      {"label": "W28", "ranges": {"waist": [70, 73]}},
-      {"label": "W30", "ranges": {"waist": [75, 78]}},
-      {"label": "W32", "ranges": {"waist": [80, 83]}},
-      {"label": "W34", "ranges": {"waist": [85, 88]}},
-      {"label": "W36", "ranges": {"waist": [90, 93]}},
-      {"label": "W38", "ranges": {"waist": [95, 98]}}
+      {"label": "W28", "ranges": {"waist": [69.9, 72.4]}},
+      {"label": "W29", "ranges": {"waist": [72.4, 74.9]}},
+      {"label": "W30", "ranges": {"waist": [74.9, 77.5]}},
+      {"label": "W31", "ranges": {"waist": [77.5, 80.0]}},
+      {"label": "W32", "ranges": {"waist": [80.0, 82.5]}},
+      {"label": "W33", "ranges": {"waist": [82.6, 85.1]}},
+      {"label": "W34", "ranges": {"waist": [85.1, 87.6]}},
+      {"label": "W36", "ranges": {"waist": [90.2, 92.7]}},
+      {"label": "W38", "ranges": {"waist": [95.2, 97.8]}},
+      {"label": "W40", "ranges": {"waist": [100.3, 102.9]}}
     ],
     "lengths": [
-      {"label": "L30", "inseam": [74, 78]},
-      {"label": "L32", "inseam": [79, 83]},
-      {"label": "L34", "inseam": [84, 88]}
+      {"label": "L28", "inseam": [69.9, 72.4]},
+      {"label": "L30", "inseam": [74.9, 77.5]},
+      {"label": "L32", "inseam": [80.0, 82.5]},
+      {"label": "L34", "inseam": [85.1, 87.6]},
+      {"label": "L36", "inseam": [90.2, 92.7]}
+    ]
+  },
+  {
+    "brand": "Generic UK (starter)",
+    "section": "womens",
+    "garment": "shoes",
+    "size_system": "UK",
+    "notes": "Standard UK sizing from foot length. Shoe brands vary, so add real charts for the ones you buy.",
+    "sizes": [
+      {"label": "2", "ranges": {"foot_length": [21.19, 21.61]}},
+      {"label": "2.5", "ranges": {"foot_length": [21.59, 22.01]}},
+      {"label": "3", "ranges": {"foot_length": [21.99, 22.41]}},
+      {"label": "3.5", "ranges": {"foot_length": [22.39, 22.81]}},
+      {"label": "4", "ranges": {"foot_length": [22.89, 23.31]}},
+      {"label": "4.5", "ranges": {"foot_length": [23.29, 23.71]}},
+      {"label": "5", "ranges": {"foot_length": [23.69, 24.11]}},
+      {"label": "5.5", "ranges": {"foot_length": [24.09, 24.51]}},
+      {"label": "6", "ranges": {"foot_length": [24.49, 24.91]}},
+      {"label": "6.5", "ranges": {"foot_length": [24.99, 25.41]}},
+      {"label": "7", "ranges": {"foot_length": [25.39, 25.81]}},
+      {"label": "7.5", "ranges": {"foot_length": [25.79, 26.21]}},
+      {"label": "8", "ranges": {"foot_length": [26.19, 26.61]}},
+      {"label": "8.5", "ranges": {"foot_length": [26.69, 27.11]}},
+      {"label": "9", "ranges": {"foot_length": [27.09, 27.51]}},
+      {"label": "9.5", "ranges": {"foot_length": [27.49, 27.91]}}
+    ]
+  },
+  {
+    "brand": "Generic (starter)",
+    "section": "mens",
+    "garment": "shoes",
+    "size_system": "UK",
+    "notes": "Standard UK sizing from foot length. Shoe brands vary, so add real charts for the ones you buy.",
+    "sizes": [
+      {"label": "5", "ranges": {"foot_length": [23.69, 24.11]}},
+      {"label": "5.5", "ranges": {"foot_length": [24.09, 24.51]}},
+      {"label": "6", "ranges": {"foot_length": [24.49, 24.91]}},
+      {"label": "6.5", "ranges": {"foot_length": [24.99, 25.41]}},
+      {"label": "7", "ranges": {"foot_length": [25.39, 25.81]}},
+      {"label": "7.5", "ranges": {"foot_length": [25.79, 26.21]}},
+      {"label": "8", "ranges": {"foot_length": [26.19, 26.61]}},
+      {"label": "8.5", "ranges": {"foot_length": [26.69, 27.11]}},
+      {"label": "9", "ranges": {"foot_length": [27.09, 27.51]}},
+      {"label": "9.5", "ranges": {"foot_length": [27.49, 27.91]}},
+      {"label": "10", "ranges": {"foot_length": [27.89, 28.31]}},
+      {"label": "10.5", "ranges": {"foot_length": [28.39, 28.81]}},
+      {"label": "11", "ranges": {"foot_length": [28.79, 29.21]}},
+      {"label": "11.5", "ranges": {"foot_length": [29.19, 29.61]}},
+      {"label": "12", "ranges": {"foot_length": [29.59, 30.01]}},
+      {"label": "12.5", "ranges": {"foot_length": [29.99, 30.41]}},
+      {"label": "13", "ranges": {"foot_length": [30.49, 30.91]}},
+      {"label": "13.5", "ranges": {"foot_length": [30.89, 31.31]}},
+      {"label": "14", "ranges": {"foot_length": [31.29, 31.71]}}
     ]
   }
 ]
