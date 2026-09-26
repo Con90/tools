@@ -7,3 +7,5 @@ pillow-heif>=0.16   # iPhone HEIC photos
 mediapipe>=0.10.14  # face landmarks + hair/skin segmentation, runs locally
 # style brief (optional: needs an Anthropic API key)
 anthropic>=1.8
+# virtual try-on (optional: needs a FASHN API key)
+fashn>=0.9

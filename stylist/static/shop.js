@@ -90,7 +90,8 @@ function productCard(p, general, { savedView = false } = {}) {
     ${p.flags?.length ? `<p class="flag">Mentions ${esc(p.flags.join(', '))}, which you said you don't wear</p>` : ''}
     <div class="actions">
       ${savedView
-        ? `<button type="button" class="secondary small" data-unsave="${p.saved_id}">Remove</button>`
+        ? `<button type="button" class="small" data-tryon="${p.saved_id}">Try on</button>
+           <button type="button" class="secondary small" data-unsave="${p.saved_id}">Remove</button>`
         : `<button type="button" class="small${p.saved ? ' secondary' : ''}" data-save="${esc(p.id)}"${p.saved ? ' disabled' : ''}>${p.saved ? 'Saved' : 'Save'}</button>`}
       <a class="small-link" href="${esc(p.link)}" target="_blank" rel="noopener">View in shop ↗</a>
     </div>
@@ -186,6 +187,10 @@ function wireShop() {
       shopState.saved = await api(`/api/profiles/${$('#shop-profile').value}/saved`);
       shopState.last?.results.forEach(p => { p.saved = shopState.saved.some(s => s.id === p.id); });
       drawResults(); drawSaved();
+    }
+    if (t.dataset.tryon) {
+      tryonWith(Number(t.dataset.tryon), $('#shop-profile').value);
+      return;
     }
     if (t.id === 'serp-change') $('#serp-edit').hidden = false;
     if (t.id === 'serp-remove') {

@@ -16,6 +16,8 @@ from .colour_api import router as colour_router
 from .shop_api import delete_profile_saved
 from .shop_api import router as shop_router
 from .style_api import router as style_router
+from .tryon_api import delete_profile_tryons
+from .tryon_api import router as tryon_router
 from .conversions import MENS_LENGTHS, SYSTEMS, WOMENS_LENGTHS, size_options
 from .estimate import USUAL_CATEGORIES, body_for
 from .sizing import FIT_OFFSETS, GARMENTS, MEASUREMENTS, SECTIONS, match_all
@@ -26,6 +28,7 @@ app = FastAPI(title="Stylist")
 app.include_router(colour_router)
 app.include_router(style_router)
 app.include_router(shop_router)
+app.include_router(tryon_router)
 
 Section = Literal["womens", "mens", "unisex"]
 Fit = Literal["slim", "regular", "relaxed"]
@@ -160,6 +163,7 @@ def delete_profile(pid: int):
         raise HTTPException(404, "not found")
     delete_profile_photos(pid)
     delete_profile_saved(pid)
+    delete_profile_tryons(pid)
 
 
 # --- size charts -----------------------------------------------------------

@@ -20,9 +20,7 @@ results ranked by how well each item's colour suits you, with the size to buy
 (from your brand size charts when the shop is one of yours) and items you said
 you don't wear flagged. Save the ones you like.
 
-Planned next:
-
-1. **Virtual try-on:** see found items on your photo via a hosted try-on model.
+Finally, **virtual try-on** shows saved items on a photo of you.
 
 ## Run it
 
@@ -110,6 +108,21 @@ everything runs offline.
    Its free plan gives about 100 searches a month. Paste your key into the
    Shop tab; it's saved only in `data/settings.json`. Searches are cached for
    a day, so repeating one doesn't use up your allowance.
+
+7. **Try on:** add a photo of yourself from head to at least the hips
+   (full length for trousers and dresses): facing the camera, arms by your
+   sides, plain background. These photos are kept separate from your colour
+   photos. Pick a saved item, or press *Try on* on a saved item in the Shop
+   tab. You can also upload a clearer garment picture, since shop thumbnails
+   are small. Results appear as before-and-after pairs you can download.
+
+   Try-on uses [FASHN](https://fashn.ai) (`tryon-v1.6`, about $0.05–0.08
+   per image). Add an API key from [app.fashn.ai/api](https://app.fashn.ai/api)
+   in the Try on tab (saved in `data/settings.json`) or set `FASHN_API_KEY`.
+   Your photo and the garment picture are sent to FASHN. The app asks FASHN
+   to return the result directly instead of storing it on their servers, and
+   keeps it only in `data/tryons`. Try-on shows how a style and colour look
+   on you; it can't show how a particular size will fit.
 
 ### How sizes are chosen
 
@@ -206,5 +219,7 @@ python -m pytest
 | `app/shop.py` | SerpAPI search, caching, product colour extraction, palette matching |
 | `app/shop_api.py` | Search, saved items and search-key endpoints |
 | `app/settings.py` | Local settings file (API keys, country) |
+| `app/tryon.py` | FASHN try-on call (official `fashn` SDK) and error handling |
+| `app/tryon_api.py` | Body photos, try-on and results endpoints |
 | `app/main.py` | FastAPI routes; serves the front end |
 | `static/` | Single-page front end (plain HTML/CSS/JS, no build step) |

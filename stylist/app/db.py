@@ -52,6 +52,16 @@ CREATE TABLE IF NOT EXISTS photos (
     analysis   TEXT NOT NULL DEFAULT '{}',
     manual     TEXT NOT NULL DEFAULT '{}',
     included   INTEGER NOT NULL DEFAULT 1,
+    kind       TEXT NOT NULL DEFAULT 'colour',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS tryons (
+    id         INTEGER PRIMARY KEY,
+    profile_id INTEGER NOT NULL,
+    photo_id   INTEGER,
+    filename   TEXT NOT NULL,
+    meta       TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -68,6 +78,7 @@ PROFILE_JSON = ("sections", "measurements", "usual_sizes", "colour", "style")
 CHART_JSON = ("sizes", "lengths")
 PHOTO_JSON = ("analysis", "manual")
 SAVED_JSON = ("product",)
+TRYON_JSON = ("meta",)
 
 
 def db_path() -> Path:
@@ -81,7 +92,7 @@ def photos_dir() -> Path:
     return d
 
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 6
 
 
 def connect() -> sqlite3.Connection:
@@ -120,6 +131,12 @@ def _initialise(conn: sqlite3.Connection) -> None:
             if version < 5:
                 saved = SCHEMA[SCHEMA.index("CREATE TABLE IF NOT EXISTS saved_items"):]
                 conn.execute(saved.split(";")[0])
+            if version < 6:
+                # The v3 step builds `photos` from the current schema, which already has `kind`.
+                if "kind" not in {r[1] for r in conn.execute("PRAGMA table_info(photos)")}:
+                    conn.execute("ALTER TABLE photos ADD COLUMN kind TEXT NOT NULL DEFAULT 'colour'")
+                tryons = SCHEMA[SCHEMA.index("CREATE TABLE IF NOT EXISTS tryons"):]
+                conn.execute(tryons.split(";")[0])
         conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
         conn.execute("COMMIT")
     except BaseException:
@@ -203,17 +220,24 @@ def _insert(conn, table: str, data: dict, json_cols) -> int:
 
 # --- generic CRUD, parameterised by table --------------------------------
 
-TABLES = {"profiles": PROFILE_JSON, "size_charts": CHART_JSON, "photos": PHOTO_JSON, "saved_items": SAVED_JSON}
+TABLES = {"profiles": PROFILE_JSON, "size_charts": CHART_JSON, "photos": PHOTO_JSON, "saved_items": SAVED_JSON,
+          "tryons": TRYON_JSON}
 
 
 def list_rows(table: str) -> list[dict]:
-    order = {"profiles": "name", "size_charts": "brand, section, garment", "photos": "id", "saved_items": "id"}[table]
+    order = {"profiles": "name", "size_charts": "brand, section, garment", "photos": "id", "saved_items": "id", "tryons": "id"}[table]
     with session() as conn:
         return [_row(r, TABLES[table]) for r in conn.execute(f"SELECT * FROM {table} ORDER BY {order}")]
 
 
-def list_photos(profile_id: int) -> list[dict]:
-    return _for_profile("photos", profile_id)
+def list_photos(profile_id: int, kind: str | None = "colour") -> list[dict]:
+    """A profile's photos: colour-analysis photos by default, kind=None for all."""
+    photos = _for_profile("photos", profile_id)
+    return [p for p in photos if kind is None or p["kind"] == kind]
+
+
+def list_tryons(profile_id: int) -> list[dict]:
+    return _for_profile("tryons", profile_id)
 
 
 def list_saved(profile_id: int) -> list[dict]:

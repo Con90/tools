@@ -235,6 +235,6 @@ def put_colour(pid: int, body: ColourSettings):
 
 
 def delete_profile_photos(pid: int) -> None:
-    for photo in db.list_photos(pid):
+    for photo in db.list_photos(pid, kind=None):
         (db.photos_dir() / photo["filename"]).unlink(missing_ok=True)
         db.delete_row("photos", photo["id"])

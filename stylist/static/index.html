@@ -17,6 +17,7 @@
       <button data-view="colour">Colours</button>
       <button data-view="style">Style</button>
       <button data-view="shop">Shop</button>
+      <button data-view="tryon">Try on</button>
     </nav>
     <div class="units" role="group" aria-label="Units">
       <button data-unit="cm">cm</button><button data-unit="in">in</button>
@@ -248,11 +249,20 @@
       <h2 id="saved-heading" class="section-heading" hidden>Saved</h2>
       <div id="saved-items" class="product-grid"></div>
     </section>
+    <!-- Try on -->
+    <section id="view-tryon" class="view" hidden>
+      <div class="toolbar">
+        <label>Profile <select id="tryon-profile"></select></label>
+      </div>
+      <div id="tryon-setup"></div>
+      <div id="tryon-content"></div>
+    </section>
   </main>
 
   <script src="/static/app.js"></script>
   <script src="/static/colour.js"></script>
   <script src="/static/style-tab.js"></script>
   <script src="/static/shop.js"></script>
+  <script src="/static/tryon.js"></script>
 </body>
 </html>

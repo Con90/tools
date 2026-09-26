@@ -79,6 +79,7 @@ function show(view) {
   if (view === 'colour') renderColour();
   if (view === 'style') renderStyle();
   if (view === 'shop') renderShop();
+  if (view === 'tryon') renderTryon();
 }
 
 function setUnit(unit) {
