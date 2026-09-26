@@ -77,6 +77,7 @@ function show(view) {
   if (view === 'profile') renderProfile();
   if (view === 'charts') renderCharts();
   if (view === 'colour') renderColour();
+  if (view === 'style') renderStyle();
 }
 
 function setUnit(unit) {

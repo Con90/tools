@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     measurements TEXT NOT NULL DEFAULT '{}',
     usual_sizes  TEXT NOT NULL DEFAULT '{}',
     colour       TEXT NOT NULL DEFAULT '{}',
+    style        TEXT NOT NULL DEFAULT '{}',
     updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS size_charts (
@@ -56,7 +57,7 @@ CREATE TABLE IF NOT EXISTS photos (
 );
 """
 
-PROFILE_JSON = ("sections", "measurements", "usual_sizes", "colour")
+PROFILE_JSON = ("sections", "measurements", "usual_sizes", "colour", "style")
 CHART_JSON = ("sizes", "lengths")
 PHOTO_JSON = ("analysis", "manual")
 
@@ -72,7 +73,7 @@ def photos_dir() -> Path:
     return d
 
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 def connect() -> sqlite3.Connection:
@@ -106,6 +107,8 @@ def _initialise(conn: sqlite3.Connection) -> None:
                 _migrate_v2(conn)
             if version < 3:
                 _migrate_v3(conn)
+            if version < 4:
+                conn.execute("ALTER TABLE profiles ADD COLUMN style TEXT NOT NULL DEFAULT '{}'")
         conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
         conn.execute("COMMIT")
     except BaseException:

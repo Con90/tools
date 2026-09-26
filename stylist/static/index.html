@@ -15,6 +15,7 @@
       <button data-view="profile">My profile</button>
       <button data-view="charts">Size charts</button>
       <button data-view="colour">Colours</button>
+      <button data-view="style">Style</button>
     </nav>
     <div class="units" role="group" aria-label="Units">
       <button data-unit="cm">cm</button><button data-unit="in">in</button>
@@ -213,9 +214,17 @@
         <div id="editor-swatches" class="feature-swatches"></div>
       </dialog>
     </section>
+    <!-- Style -->
+    <section id="view-style" class="view" hidden>
+      <div class="toolbar">
+        <label>Profile <select id="style-profile"></select></label>
+      </div>
+      <div id="style-content"></div>
+    </section>
   </main>
 
   <script src="/static/app.js"></script>
   <script src="/static/colour.js"></script>
+  <script src="/static/style-tab.js"></script>
 </body>
 </html>

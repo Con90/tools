@@ -5,3 +5,5 @@ numpy>=1.24
 pillow>=10
 pillow-heif>=0.16   # iPhone HEIC photos
 mediapipe>=0.10.14  # face landmarks + hair/skin segmentation, runs locally
+# style brief (optional: needs an Anthropic API key)
+anthropic>=1.8

@@ -10,13 +10,16 @@ It also finds your **colour palette**: upload photos of your face and it
 measures your skin, hair and eye colours, works out your seasonal colour type
 (one of 12) and shows the colours, neutrals and metals that suit you.
 
+And it gives **style advice**: your body shape and proportions with what to
+look for and what's harder to wear, tips from your colouring (contrast,
+fabrics, prints), and optionally a personal style brief written by Claude,
+with style directions, outfit formulas in your palette and a shopping list.
+
 Planned next:
 
-1. **Style suggestions:** body proportions plus a photo → style directions and
-   cuts to look for (via the Claude API).
-2. **Product search:** find clothes through a shopping search API, ranked by
+1. **Product search:** find clothes through a shopping search API, ranked by
    fit score and palette match.
-3. **Virtual try-on:** see found items on your photo via a hosted try-on model.
+2. **Virtual try-on:** see found items on your photo via a hosted try-on model.
 
 ## Run it
 
@@ -77,6 +80,21 @@ everything runs offline.
 
    Photos never leave your computer; they're stored in `data/photos`.
 
+5. **Style:** shows your body shape (from your measurements, or estimated
+   from your usual sizes; you can override it), what to look for and what's
+   harder to wear, proportion tips (petite, tall, leg length) and tips from
+   your colour analysis. Fill in *About you* (lifestyle, style words, budget,
+   likes and dislikes), then press *Write my brief* for a personal style brief
+   from Claude. Each shopping-list item links to a shopping search.
+
+   The brief needs an [Anthropic API key](https://console.anthropic.com/settings/keys):
+   paste it into the app (saved only in `data/settings.json`) or set
+   `ANTHROPIC_API_KEY` before starting. Each brief costs roughly $0.10–0.20.
+   Claude is sent your shape, proportions, colour season, palette and what you
+   wrote in *About you*. Your raw measurements are not sent, and a photo is
+   sent only if you tick *Include a photo*. Everything else in the app works
+   without a key.
+
 ### How sizes are chosen
 
 - Size charts list the *body* measurements each size is designed for. Every
@@ -118,6 +136,19 @@ colour ranges, not trained on labelled data. Lighting, make-up and dyed hair
 all move the numbers, which is why several photos, the white reference and
 the side-by-side comparison help.
 
+### How body shape is worked out
+
+- **Women's shapes** follow the FFIT method (Simmons, Istook & Devarajan,
+  2004), which compares bust, waist and hips. FFIT's "bottom hourglass" is
+  shown as a pear with a defined waist. An *apple* shape is added for when
+  the waist is at least 90% of both bust and hips.
+- **Men's shapes** use the chest-to-waist drop: inverted triangle (≥ 20 cm),
+  trapezoid, rectangle, triangle (hips wider than chest) and oval (waist ≥
+  chest).
+- **The brief** uses Claude Opus 5 with a JSON schema, so the response always
+  has the same structure. A server-side refusal fallback is on, so if the
+  model declines a request, it's re-run on a backup model rather than failing.
+
 ## Development
 
 ```bash
@@ -135,5 +166,8 @@ python -m pytest
 | `app/face.py` | Face landmarks, hair/skin segmentation and colour sampling (MediaPipe) |
 | `app/seasons.py` | Warmth/depth/clarity scores, 12-season ranking, palettes |
 | `app/colour_api.py` | Photo upload, sample picking and colour summary endpoints |
+| `app/body.py` | Body shape, proportions and style guidance |
+| `app/brief.py` | Claude style brief: prompt, schema, API key storage |
+| `app/style_api.py` | Style guide, preferences and brief endpoints |
 | `app/main.py` | FastAPI routes; serves the front end |
 | `static/` | Single-page front end (plain HTML/CSS/JS, no build step) |
