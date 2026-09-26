@@ -1,2 +1,7 @@
 fastapi>=0.110
 uvicorn>=0.27
+# colour analysis
+numpy>=1.24
+pillow>=10
+pillow-heif>=0.16   # iPhone HEIC photos
+mediapipe>=0.10.14  # face landmarks + hair/skin segmentation, runs locally

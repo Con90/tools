@@ -14,6 +14,7 @@
       <button data-view="find" class="active">Find my size</button>
       <button data-view="profile">My profile</button>
       <button data-view="charts">Size charts</button>
+      <button data-view="colour">Colours</button>
     </nav>
     <div class="units" role="group" aria-label="Units">
       <button data-unit="cm">cm</button><button data-unit="in">in</button>
@@ -160,8 +161,61 @@
         </form>
       </dialog>
     </section>
+    <!-- Colours -->
+    <section id="view-colour" class="view" hidden>
+      <div class="toolbar">
+        <label>Profile <select id="colour-profile"></select></label>
+      </div>
+
+      <div id="colour-empty" class="card upload-intro" hidden>
+        <h2>Find your colours</h2>
+        <p>Add a few photos of your face and the app will measure your skin, hair and eye colours,
+          work out your seasonal colour type and show the palette that suits you.</p>
+      </div>
+
+      <label id="drop" class="drop">
+        <input type="file" id="photo-input" accept="image/*,.heic,.heif" multiple>
+        <b>Add photos</b> <span class="muted">(drop them here or click to choose)</span>
+        <span id="upload-status" class="status"></span>
+      </label>
+      <details class="hint tips">
+        <summary>Tips for good photos</summary>
+        <ul>
+          <li><b>Daylight</b>, facing a window, is best. Avoid yellow indoor bulbs, direct sun and shade.</li>
+          <li>Face the camera, with your whole face and some hair visible.</li>
+          <li>No make-up or filters if you can, and a neutral top (white or grey) helps.</li>
+          <li>3–5 photos taken at different times give a steadier result than one.</li>
+          <li>Holding a sheet of white paper in the shot lets you correct the lighting:
+            open the photo and mark it as <i>white</i>.</li>
+        </ul>
+        Photos are stored only on this computer, in <code>data/photos</code>.
+      </details>
+
+      <div id="colour-result"></div>
+      <h2 id="photos-heading" class="section-heading" hidden>Your photos</h2>
+      <div id="photo-grid" class="photo-grid"></div>
+
+      <dialog id="photo-dialog" class="photo-dialog">
+        <div class="photo-dialog-head">
+          <h2>Adjust colour samples</h2>
+          <button type="button" id="photo-close" class="secondary">Done</button>
+        </div>
+        <p class="hint">Choose what to pick, then click on the photo. Pick the cheek for skin,
+          the coloured part of the eye (not the pupil), mid-length hair, and anything
+          that's truly white (paper, a white shirt) to correct the lighting.</p>
+        <div class="segmented" id="pick-mode" role="radiogroup">
+          <label><input type="radio" name="pick" value="skin" checked> Skin</label>
+          <label><input type="radio" name="pick" value="hair"> Hair</label>
+          <label><input type="radio" name="pick" value="eyes"> Eyes</label>
+          <label><input type="radio" name="pick" value="white"> White reference</label>
+        </div>
+        <div class="editor-wrap"><div id="editor-stage" class="photo-stage"></div></div>
+        <div id="editor-swatches" class="feature-swatches"></div>
+      </dialog>
+    </section>
   </main>
 
   <script src="/static/app.js"></script>
+  <script src="/static/colour.js"></script>
 </body>
 </html>

@@ -11,6 +11,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
 from . import db
+from .colour_api import delete_profile_photos
+from .colour_api import router as colour_router
 from .conversions import MENS_LENGTHS, SYSTEMS, WOMENS_LENGTHS, size_options
 from .estimate import USUAL_CATEGORIES, body_for
 from .sizing import FIT_OFFSETS, GARMENTS, MEASUREMENTS, SECTIONS, match_all
@@ -18,6 +20,7 @@ from .sizing import FIT_OFFSETS, GARMENTS, MEASUREMENTS, SECTIONS, match_all
 STATIC = Path(__file__).resolve().parent.parent / "static"
 
 app = FastAPI(title="Stylist")
+app.include_router(colour_router)
 
 Section = Literal["womens", "mens", "unisex"]
 Fit = Literal["slim", "regular", "relaxed"]
@@ -150,6 +153,7 @@ def update_profile(pid: int, p: ProfileIn):
 def delete_profile(pid: int):
     if not db.delete_row("profiles", pid):
         raise HTTPException(404, "not found")
+    delete_profile_photos(pid)
 
 
 # --- size charts -----------------------------------------------------------

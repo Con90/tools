@@ -6,15 +6,17 @@ and it tells you which size to pick in each brand, with UK / EU / US
 equivalents, how each measurement will feel (fits, snug, roomy, tight…), and
 when you're between sizes. Covers clothing and shoes, women's and men's.
 
-This is **phase 1** (sizing). Planned next:
+It also finds your **colour palette**: upload photos of your face and it
+measures your skin, hair and eye colours, works out your seasonal colour type
+(one of 12) and shows the colours, neutrals and metals that suit you.
 
-1. **Colour palette:** upload a photo; skin, eye and hair colours are measured
-   and mapped to a seasonal colour palette.
-2. **Style suggestions:** body proportions plus a photo → style directions and
+Planned next:
+
+1. **Style suggestions:** body proportions plus a photo → style directions and
    cuts to look for (via the Claude API).
-3. **Product search:** find clothes through a shopping search API, ranked by
+2. **Product search:** find clothes through a shopping search API, ranked by
    fit score and palette match.
-4. **Virtual try-on:** see found items on your photo via a hosted try-on model.
+3. **Virtual try-on:** see found items on your photo via a hosted try-on model.
 
 ## Run it
 
@@ -26,7 +28,10 @@ The first run creates a virtual environment and installs dependencies. The app
 then opens at <http://127.0.0.1:8765>. It only listens on your own machine;
 your profiles and charts are saved in `data/stylist.db`.
 
-Needs Python 3.10+.
+Needs Python 3.10+. The first run downloads about 250 MB of packages (mostly
+MediaPipe and OpenCV, used for colour analysis). The first photo you analyse
+downloads two small face models (~20 MB) into `data/models`. After that,
+everything runs offline.
 
 ## Using it
 
@@ -54,6 +59,24 @@ Needs Python 3.10+.
    best-fitting brands first, with its equivalents in other systems
    (e.g. *UK 12 · EU 40 · US 8 · M*).
 
+4. **Colours:** add 3–5 photos of your face (daylight by a window is best;
+   see *Tips for good photos*). For each photo the app:
+   - finds the face and places sample points on the cheeks, forehead,
+     irises and hair (shown as dots when you click *Adjust*);
+   - checks the whites of the eyes for coloured light and warns if the
+     lighting is too warm or too blue.
+
+   In *Adjust* you can re-pick any colour by clicking on the photo, or mark
+   something truly white (paper, a white shirt) to correct the lighting.
+   The result shows your season, how you measured on three scales (cool ↔
+   warm, light ↔ deep, soft ↔ bright), the closest other seasons, and your
+   palette (click a swatch to copy its hex code). *Compare side by side*
+   puts your face on colours from your top two seasons, which is the best way
+   to settle a close call. If your hair is dyed, set your natural hair colour
+   under *Adjust*; if you already know your season, you can set it there too.
+
+   Photos never leave your computer; they're stored in `data/photos`.
+
 ### How sizes are chosen
 
 - Size charts list the *body* measurements each size is designed for. Every
@@ -70,6 +93,31 @@ Needs Python 3.10+.
   US = UK − 4; men's EU ≈ chest cm ÷ 2, trouser EU = waist inches + 16).
   Brands vary, which is why a real brand chart always beats a conversion.
 
+### How colours are analysed
+
+- **Sampling:** MediaPipe's Face Landmarker (478 points, including the
+  irises) places the sample areas. Its multiclass segmenter labels hair and
+  face skin, so the skin samples stay on skin. Within each area, the darkest
+  and brightest pixels (shadows, shine, catch-lights) are dropped, and the
+  rest are averaged in linear RGB.
+- **White reference:** marking something white applies a von Kries
+  correction, which scales each colour channel so that point becomes neutral.
+- **Combining photos:** colours are converted to CIELAB, and each feature
+  takes the median across your included photos.
+- **Three scores** from −1 to +1:
+  - *Warmth:* skin hue angle (pink ↔ golden), how golden the hair is, and
+    eye colour.
+  - *Depth:* hair, skin and eye lightness.
+  - *Clarity:* how vivid the eyes are, hair/skin contrast, and how
+    saturated the hair is.
+- **Choosing the season:** each of the 12 seasons sits at a point in that
+  3D space, and the nearest ones are shown with a match percentage.
+
+This is a heuristic. Its thresholds are set from typical skin and hair
+colour ranges, not trained on labelled data. Lighting, make-up and dyed hair
+all move the numbers, which is why several photos, the white reference and
+the side-by-side comparison help.
+
 ## Development
 
 ```bash
@@ -83,5 +131,9 @@ python -m pytest
 | `app/conversions.py` | UK / EU / US / letter / waist and shoe size conversions |
 | `app/estimate.py` | Turns usual sizes into estimated measurements (quick mode) |
 | `app/db.py` | SQLite storage and migrations; seeds `app/starter_charts.json` |
+| `app/colour.py` | sRGB ↔ CIELAB, white balance |
+| `app/face.py` | Face landmarks, hair/skin segmentation and colour sampling (MediaPipe) |
+| `app/seasons.py` | Warmth/depth/clarity scores, 12-season ranking, palettes |
+| `app/colour_api.py` | Photo upload, sample picking and colour summary endpoints |
 | `app/main.py` | FastAPI routes; serves the front end |
 | `static/` | Single-page front end (plain HTML/CSS/JS, no build step) |

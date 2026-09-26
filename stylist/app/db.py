@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     mode         TEXT NOT NULL DEFAULT 'quick',
     measurements TEXT NOT NULL DEFAULT '{}',
     usual_sizes  TEXT NOT NULL DEFAULT '{}',
+    colour       TEXT NOT NULL DEFAULT '{}',
     updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS size_charts (
@@ -40,17 +41,38 @@ CREATE TABLE IF NOT EXISTS size_charts (
     lengths    TEXT NOT NULL DEFAULT '[]',
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+""" + """
+CREATE TABLE IF NOT EXISTS photos (
+    id         INTEGER PRIMARY KEY,
+    profile_id INTEGER NOT NULL,
+    filename   TEXT NOT NULL,
+    width      INTEGER NOT NULL,
+    height     INTEGER NOT NULL,
+    analysis   TEXT NOT NULL DEFAULT '{}',
+    manual     TEXT NOT NULL DEFAULT '{}',
+    included   INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
-PROFILE_JSON = ("sections", "measurements", "usual_sizes")
+PROFILE_JSON = ("sections", "measurements", "usual_sizes", "colour")
 CHART_JSON = ("sizes", "lengths")
+PHOTO_JSON = ("analysis", "manual")
 
 
 def db_path() -> Path:
     return Path(os.environ.get("STYLIST_DB", DEFAULT_DB))
 
 
-SCHEMA_VERSION = 2
+def photos_dir() -> Path:
+    """Uploaded photos live next to the database, so they stay on this computer."""
+    d = db_path().parent / "photos"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+SCHEMA_VERSION = 3
 
 
 def connect() -> sqlite3.Connection:
@@ -79,8 +101,11 @@ def _initialise(conn: sqlite3.Connection) -> None:
                 if statement.strip():
                     conn.execute(statement)
             _seed(conn)
-        elif version == 1:
-            _migrate_v2(conn)
+        else:
+            if version < 2:
+                _migrate_v2(conn)
+            if version < 3:
+                _migrate_v3(conn)
         conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
         conn.execute("COMMIT")
     except BaseException:
@@ -123,6 +148,13 @@ def _migrate_v2(conn: sqlite3.Connection) -> None:
     _seed(conn)  # adds the new starter shoe charts
 
 
+def _migrate_v3(conn: sqlite3.Connection) -> None:
+    """v2 → v3: colour analysis (photos table, colour settings on profiles)."""
+    conn.execute("ALTER TABLE profiles ADD COLUMN colour TEXT NOT NULL DEFAULT '{}'")
+    photos = SCHEMA[SCHEMA.index("CREATE TABLE IF NOT EXISTS photos"):]
+    conn.execute(photos.split(";")[0])
+
+
 def guess_size_system(labels: list[str]) -> str:
     labels = [str(l).strip().upper() for l in labels]
     if labels and all(re.fullmatch(r"W\d+", l) for l in labels):
@@ -157,13 +189,19 @@ def _insert(conn, table: str, data: dict, json_cols) -> int:
 
 # --- generic CRUD, parameterised by table --------------------------------
 
-TABLES = {"profiles": PROFILE_JSON, "size_charts": CHART_JSON}
+TABLES = {"profiles": PROFILE_JSON, "size_charts": CHART_JSON, "photos": PHOTO_JSON}
 
 
 def list_rows(table: str) -> list[dict]:
-    order = "name" if table == "profiles" else "brand, section, garment"
+    order = {"profiles": "name", "size_charts": "brand, section, garment", "photos": "id"}[table]
     with session() as conn:
         return [_row(r, TABLES[table]) for r in conn.execute(f"SELECT * FROM {table} ORDER BY {order}")]
+
+
+def list_photos(profile_id: int) -> list[dict]:
+    with session() as conn:
+        rows = conn.execute("SELECT * FROM photos WHERE profile_id = ? ORDER BY id", (profile_id,))
+        return [_row(r, PHOTO_JSON) for r in rows]
 
 
 def get_row(table: str, row_id: int) -> dict | None:
