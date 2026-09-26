@@ -16,6 +16,7 @@
       <button data-view="charts">Size charts</button>
       <button data-view="colour">Colours</button>
       <button data-view="style">Style</button>
+      <button data-view="shop">Shop</button>
     </nav>
     <div class="units" role="group" aria-label="Units">
       <button data-unit="cm">cm</button><button data-unit="in">in</button>
@@ -221,10 +222,37 @@
       </div>
       <div id="style-content"></div>
     </section>
+    <!-- Shop -->
+    <section id="view-shop" class="view" hidden>
+      <div class="toolbar">
+        <label>Profile <select id="shop-profile"></select></label>
+      </div>
+      <div id="shop-setup"></div>
+      <form id="shop-form" class="card shop-form">
+        <div class="row">
+          <label class="grow">What are you looking for?
+            <input name="query" required minlength="2" maxlength="150" placeholder="e.g. camel wool coat"></label>
+          <label>Type <select name="garment" id="shop-garment"></select></label>
+        </div>
+        <div class="row">
+          <label>Country <select name="country" id="shop-country"></select></label>
+          <label>Min price <input name="min_price" type="number" min="0" step="any"></label>
+          <label>Max price <input name="max_price" type="number" min="0" step="any"></label>
+          <div class="submit-cell"><button type="submit">Search</button></div>
+        </div>
+        <div id="brief-picks"></div>
+      </form>
+      <p id="shop-status" class="status"></p>
+      <div id="shop-summary"></div>
+      <div id="shop-results" class="product-grid"></div>
+      <h2 id="saved-heading" class="section-heading" hidden>Saved</h2>
+      <div id="saved-items" class="product-grid"></div>
+    </section>
   </main>
 
   <script src="/static/app.js"></script>
   <script src="/static/colour.js"></script>
   <script src="/static/style-tab.js"></script>
+  <script src="/static/shop.js"></script>
 </body>
 </html>

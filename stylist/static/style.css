@@ -303,3 +303,33 @@ button.link { background: none; border: 0; padding: 0; color: var(--accent); fon
 @media (max-width: 760px) {
   .style-grid, .two-col { grid-template-columns: 1fr; }
 }
+
+/* --- shop tab ------------------------------------------------------------ */
+.shop-form { margin-bottom: 12px; }
+.shop-form .row + .row { margin-top: 12px; }
+.shop-form .grow { flex: 3 1 260px; }
+.submit-cell { display: flex; align-items: flex-end; flex: 0 0 auto; }
+.picks-label { margin: 14px 0 6px; }
+.brief-pick { font-weight: 500; }
+.shop-key { margin: 0 0 12px; }
+#shop-status.error { color: var(--poor); }
+.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.product-grid[aria-busy="true"] { opacity: .45; }
+.product { padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.product-img { display: block; aspect-ratio: 1; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.product-img img { width: 100%; height: 100%; object-fit: contain; }
+.product h3 { margin: 0; font-size: 14px; font-weight: 500; line-height: 1.35; }
+.product h3 a { color: var(--text); text-decoration: none; }
+.product h3 a:hover { text-decoration: underline; }
+.product p { margin: 0; font-size: 13px; }
+.product .actions { margin-top: auto; padding-top: 6px; gap: 10px; }
+.price { color: var(--text); }
+.cmatch { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; align-self: flex-start;
+  padding: 2px 8px 2px 4px; border-radius: 99px; background: var(--bg); }
+.cmatch i { width: 14px; height: 14px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--text) 20%, transparent); }
+.cmatch .nearest { width: 10px; height: 10px; }
+.cmatch.m-great { color: var(--great); } .cmatch.m-good { color: var(--good); } .cmatch.m-avoid { color: var(--poor); } .cmatch.m-off, .cmatch.m-unknown { color: var(--muted); }
+.size-line { color: var(--text); }
+.flag { color: var(--poor); }
+.small-link { font-size: 13px; color: var(--accent); }
+.search-links { display: inline-flex; gap: 8px; align-items: center; }

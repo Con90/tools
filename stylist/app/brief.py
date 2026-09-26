@@ -21,7 +21,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from . import db
+from . import settings
 
 MODEL = "claude-opus-5"
 # Server-side refusal fallback: if the model declines, the API re-runs the
@@ -36,32 +36,12 @@ class BriefError(Exception):
 # --- API key ------------------------------------------------------------------------------
 
 
-def _settings_path() -> Path:
-    return db.db_path().parent / "settings.json"
-
-
 def saved_key() -> str | None:
-    try:
-        return json.loads(_settings_path().read_text()).get("anthropic_api_key") or None
-    except (OSError, ValueError):
-        return None
+    return settings.get("anthropic_api_key")
 
 
 def save_key(key: str | None) -> None:
-    path = _settings_path()
-    try:
-        settings = json.loads(path.read_text())
-    except (OSError, ValueError):
-        settings = {}
-    if key:
-        settings["anthropic_api_key"] = key
-    else:
-        settings.pop("anthropic_api_key", None)
-    path.write_text(json.dumps(settings))
-    try:
-        path.chmod(0o600)  # the key is a secret; keep it readable by this user only
-    except OSError:
-        pass
+    settings.put("anthropic_api_key", key)
 
 
 def key_status() -> dict:

@@ -123,7 +123,8 @@ function briefHtml(result) {
     <ol class="shopping">${b.shopping_list.map(i => `
       <li>${dot(i.colour_hex)}<div><b>${esc(i.item)}</b> <span class="muted">${esc(i.colour_name)}</span>
         <p class="muted">${esc(i.why)}</p></div>
-        <a class="search" href="${shopUrl(i.search_query)}" target="_blank" rel="noopener" title="Search: ${esc(i.search_query)}">Search</a></li>`).join('')}</ol>
+        <span class="search-links"><button type="button" class="small" data-find="${esc(i.search_query)}" data-garment="${esc(i.category)}">Find</button>
+        <a class="search" href="${shopUrl(i.search_query)}" target="_blank" rel="noopener" title="Search Google Shopping: ${esc(i.search_query)}">Google</a></span></li>`).join('')}</ol>
 
     <h3>Fit notes</h3>${list(b.fit_notes)}
     <p class="muted small-print">Written by ${esc(result.model)} on ${esc(new Date(result.created_at).toLocaleString())}
@@ -196,6 +197,10 @@ function wireStyle() {
     }
   });
   root.addEventListener('click', async e => {
+    if (e.target.dataset.find) {
+      shopSearchFor(e.target.dataset.find, e.target.dataset.garment, $('#style-profile').value);
+      return;
+    }
     if (e.target.id === 'key-change') $('#key-edit').hidden = false;
     if (e.target.id === 'key-remove') {
       await api('/api/settings/anthropic-key', { method: 'PUT', body: { key: null } });

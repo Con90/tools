@@ -15,11 +15,14 @@ look for and what's harder to wear, tips from your colouring (contrast,
 fabrics, prints), and optionally a personal style brief written by Claude,
 with style directions, outfit formulas in your palette and a shopping list.
 
+And it **finds products**: search shops through Google Shopping and see
+results ranked by how well each item's colour suits you, with the size to buy
+(from your brand size charts when the shop is one of yours) and items you said
+you don't wear flagged. Save the ones you like.
+
 Planned next:
 
-1. **Product search:** find clothes through a shopping search API, ranked by
-   fit score and palette match.
-2. **Virtual try-on:** see found items on your photo via a hosted try-on model.
+1. **Virtual try-on:** see found items on your photo via a hosted try-on model.
 
 ## Run it
 
@@ -95,6 +98,19 @@ everything runs offline.
    sent only if you tick *Include a photo*. Everything else in the app works
    without a key.
 
+6. **Shop:** search for anything, or press *Find* next to an item in your
+   style brief's shopping list. Results are sorted by colour: *In your
+   palette* first, *Harder colour for you* last. Each card shows the price,
+   shop and the size to buy: your size for that brand if you've added its
+   size chart, otherwise your usual size. Items mentioning something you said
+   you don't wear (e.g. "cropped") are flagged. Filter by price and choose
+   your country. *Save* keeps items in your *Saved* list.
+
+   Search uses [SerpAPI](https://serpapi.com/users/sign_up) (Google Shopping).
+   Its free plan gives about 100 searches a month. Paste your key into the
+   Shop tab; it's saved only in `data/settings.json`. Searches are cached for
+   a day, so repeating one doesn't use up your allowance.
+
 ### How sizes are chosen
 
 - Size charts list the *body* measurements each size is designed for. Every
@@ -149,6 +165,24 @@ the side-by-side comparison help.
   has the same structure. A server-side refusal fallback is on, so if the
   model declines a request, it's re-run on a backup model rather than failing.
 
+### How products are matched to your colours
+
+The app downloads each product thumbnail and finds the garment's main colour:
+- It reads the background colour from the image border and ignores pixels
+  close to it.
+- It clusters the remaining central pixels in CIELAB and keeps the largest
+  cluster.
+
+That colour is compared with your season's palette, with lightness
+differences counted at half weight, because photos shift lightness a lot:
+- **In your palette:** within ΔE 10 of a palette colour.
+- **Close to your palette:** within ΔE 20.
+- **Harder colour for you:** nearer to one of your "harder to wear"
+  colours.
+
+It works best on plain-background product shots. Photos of models or busy
+backgrounds can confuse it, so trust your eye too.
+
 ## Development
 
 ```bash
@@ -169,5 +203,8 @@ python -m pytest
 | `app/body.py` | Body shape, proportions and style guidance |
 | `app/brief.py` | Claude style brief: prompt, schema, API key storage |
 | `app/style_api.py` | Style guide, preferences and brief endpoints |
+| `app/shop.py` | SerpAPI search, caching, product colour extraction, palette matching |
+| `app/shop_api.py` | Search, saved items and search-key endpoints |
+| `app/settings.py` | Local settings file (API keys, country) |
 | `app/main.py` | FastAPI routes; serves the front end |
 | `static/` | Single-page front end (plain HTML/CSS/JS, no build step) |

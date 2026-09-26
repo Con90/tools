@@ -55,11 +55,19 @@ CREATE TABLE IF NOT EXISTS photos (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS saved_items (
+    id         INTEGER PRIMARY KEY,
+    profile_id INTEGER NOT NULL,
+    product    TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 PROFILE_JSON = ("sections", "measurements", "usual_sizes", "colour", "style")
 CHART_JSON = ("sizes", "lengths")
 PHOTO_JSON = ("analysis", "manual")
+SAVED_JSON = ("product",)
 
 
 def db_path() -> Path:
@@ -73,7 +81,7 @@ def photos_dir() -> Path:
     return d
 
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 
 def connect() -> sqlite3.Connection:
@@ -109,6 +117,9 @@ def _initialise(conn: sqlite3.Connection) -> None:
                 _migrate_v3(conn)
             if version < 4:
                 conn.execute("ALTER TABLE profiles ADD COLUMN style TEXT NOT NULL DEFAULT '{}'")
+            if version < 5:
+                saved = SCHEMA[SCHEMA.index("CREATE TABLE IF NOT EXISTS saved_items"):]
+                conn.execute(saved.split(";")[0])
         conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
         conn.execute("COMMIT")
     except BaseException:
@@ -192,19 +203,27 @@ def _insert(conn, table: str, data: dict, json_cols) -> int:
 
 # --- generic CRUD, parameterised by table --------------------------------
 
-TABLES = {"profiles": PROFILE_JSON, "size_charts": CHART_JSON, "photos": PHOTO_JSON}
+TABLES = {"profiles": PROFILE_JSON, "size_charts": CHART_JSON, "photos": PHOTO_JSON, "saved_items": SAVED_JSON}
 
 
 def list_rows(table: str) -> list[dict]:
-    order = {"profiles": "name", "size_charts": "brand, section, garment", "photos": "id"}[table]
+    order = {"profiles": "name", "size_charts": "brand, section, garment", "photos": "id", "saved_items": "id"}[table]
     with session() as conn:
         return [_row(r, TABLES[table]) for r in conn.execute(f"SELECT * FROM {table} ORDER BY {order}")]
 
 
 def list_photos(profile_id: int) -> list[dict]:
+    return _for_profile("photos", profile_id)
+
+
+def list_saved(profile_id: int) -> list[dict]:
+    return _for_profile("saved_items", profile_id)
+
+
+def _for_profile(table: str, profile_id: int) -> list[dict]:
     with session() as conn:
-        rows = conn.execute("SELECT * FROM photos WHERE profile_id = ? ORDER BY id", (profile_id,))
-        return [_row(r, PHOTO_JSON) for r in rows]
+        rows = conn.execute(f"SELECT * FROM {table} WHERE profile_id = ? ORDER BY id", (profile_id,))
+        return [_row(r, TABLES[table]) for r in rows]
 
 
 def get_row(table: str, row_id: int) -> dict | None:
