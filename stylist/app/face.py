@@ -23,7 +23,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageOps
 
-from .colour import linear_to_lab, srgb_to_linear
+from .colour import linear_to_lab, rgb_to_lab, srgb_to_linear
 
 MODELS_DIR = Path(os.environ.get("STYLIST_MODELS", Path(__file__).resolve().parent.parent / "data" / "models"))
 MODEL_URLS = {
@@ -279,17 +279,34 @@ def analyse(img: np.ndarray, _scale: float = 1.0) -> dict:
 
     # Lighting check from the whites of the eyes: they're never perfectly white,
     # but a strong tint means coloured light that would skew the reading.
+    lighting_issue = False
     white = _trimmed_linear(np.concatenate(sclera), trim=(0.6, 0.97))
     if white is not None:
         _, a, b = linear_to_lab(np.array(white))
         if b > 14:
+            lighting_issue = True
             warnings.append("The light looks warm/yellow (indoor bulbs or golden hour); results may lean warm. "
                             "Daylight is best, or mark something white in the photo.")
         elif b < -3:
+            lighting_issue = True
             warnings.append("The light looks cool/blue (shade or screens); results may lean cool. "
                             "Daylight is best, or mark something white in the photo.")
+
+    # Exposure check: a face far darker than the room behind it is backlit or
+    # lit from above, and would read as much deeper colouring than it is.
+    if samples["skin"] is not None:
+        skin_L = float(linear_to_lab(np.array(samples["skin"]))[0])
+        background = img[seg == 0]
+        if len(background) > 100:
+            bg_L = float(np.median(rgb_to_lab(background[:: max(1, len(background) // 20000)])[:, 0]))
+            if skin_L < 45 and bg_L - skin_L > 30:
+                lighting_issue = True
+                warnings.append("Your face is much darker than the room behind you, which usually means the light "
+                                "is behind or above you. Your colouring will read darker than it is. Face a window "
+                                "in daylight for a reliable result.")
 
     pad = 0.35
     box = [max(0, x0 - face_w * pad) / w, max(0, y0 - face_w * pad * 1.3) / h,
            min(w, x1 + face_w * pad) / w, min(h, y1 + face_w * pad * 0.6) / h]
-    return {"samples": samples, "points": points, "face_box": box, "warnings": warnings}
+    return {"samples": samples, "points": points, "face_box": box, "warnings": warnings,
+            "lighting_issue": lighting_issue}

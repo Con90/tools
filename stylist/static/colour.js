@@ -83,6 +83,9 @@ function resultHtml(s) {
       <div class="features">${features}</div>
     </div>
 
+    ${s.poor_light_photos ? `<p class="note provisional">${s.poor_light_photos} of your ${s.photos} photos
+      ${s.poor_light_photos === 1 ? 'was' : 'were'} taken in poor light, so treat this result as provisional.
+      Untick them below, or add photos taken facing a window in daylight.</p>` : ''}
     ${s.scores ? `<div class="axes">
       ${axisBar(s.scores.warmth, 'Cool', 'Warm')}
       ${axisBar(s.scores.depth, 'Light', 'Deep')}

@@ -6,6 +6,7 @@ where those aren't available.
 import io
 from pathlib import Path
 
+import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
@@ -119,3 +120,26 @@ def test_full_length_photo_zooms_in_on_the_face():
     assert any("small" in w for w in photo["warnings"])
     x0, y0, x1, y1 = photo["face_box"]
     assert 0.4 < x0 < x1 < 0.6 and y1 < 0.2  # mapped back onto the full photo
+
+
+def test_backlit_photo_is_flagged_and_result_provisional():
+    img = np.array(Image.open(io.BytesIO(PORTRAIT)).convert("RGB")).astype(float)
+    normal = face.analyse(img.astype(np.uint8))
+    assert normal["lighting_issue"] is False
+    # Darken the face and brighten the room around it, like a window behind the person.
+    h, w, _ = img.shape
+    x0, y0, x1, y1 = [int(v * s) for v, s in zip(normal["face_box"], (w, h, w, h))]
+    yy, xx = np.mgrid[:h, :w]
+    outside = ~((xx >= x0) & (xx < x1) & (yy >= y0) & (yy < y1))
+    backlit = img * 0.4
+    backlit[outside] = np.clip(img[outside] * 1.25 + 40, 0, 255)
+    buf = io.BytesIO()
+    Image.fromarray(backlit.astype(np.uint8)).save(buf, "JPEG")
+
+    pid = _profile()
+    photo = _upload(pid, buf.getvalue()).json()
+    assert any("darker than the room" in w for w in photo["warnings"])
+    assert client.get(f"/api/profiles/{pid}/colour").json()["poor_light_photos"] == 1
+    client.patch(f"/api/photos/{photo['id']}", json={"included": False})
+    _upload(pid)
+    assert client.get(f"/api/profiles/{pid}/colour").json()["poor_light_photos"] == 0

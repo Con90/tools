@@ -96,8 +96,11 @@ def colour_summary(profile: dict) -> dict:
         label, lab = NATURAL_HAIR[hair_key]
         features["hair"] = {"lab": lab, "hex": lab_to_hex(lab), "photos": 0, "source": f"natural hair: {label}"}
 
+    # A white reference fixes colour casts but not a face in shadow, so only
+    # uncorrected photos with lighting problems make the result provisional.
+    poor_light = sum(1 for p in photos if p["analysis"].get("lighting_issue") and "white" not in p["manual"])
     result = {"photos": len(photos), "features": features, "settings": settings,
-              "season": settings.get("season_override")}
+              "season": settings.get("season_override"), "poor_light_photos": poor_light}
     if "skin" in features:
         s = scores(features["skin"]["lab"],
                    features.get("hair", {}).get("lab"), features.get("eyes", {}).get("lab"))

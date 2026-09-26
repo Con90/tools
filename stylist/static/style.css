@@ -368,3 +368,4 @@ button.link { background: none; border: 0; padding: 0; color: var(--accent); fon
 .garment-preview img { width: 110px; aspect-ratio: 3 / 4; object-fit: contain; background: #fff; border-radius: 8px; border: 1px solid var(--border); flex: none; }
 .garment-preview p { margin: 0 0 6px; font-size: 13px; }
 .garment-status { margin-top: 14px; }
+.provisional { background: color-mix(in srgb, var(--good) 12%, transparent); border-radius: 8px; padding: 8px 12px; margin-top: 14px; }
