@@ -1,0 +1,99 @@
+[
+  {
+    "brand": "Generic UK (starter)",
+    "section": "womens",
+    "garment": "tops",
+    "notes": "Approximate UK high-street sizing to get you started. Replace with real brand charts.",
+    "sizes": [
+      {"label": "6",  "ranges": {"chest": [76, 80],  "waist": [58, 62]}},
+      {"label": "8",  "ranges": {"chest": [80, 84],  "waist": [62, 66]}},
+      {"label": "10", "ranges": {"chest": [84, 88],  "waist": [66, 70]}},
+      {"label": "12", "ranges": {"chest": [88, 93],  "waist": [70, 75]}},
+      {"label": "14", "ranges": {"chest": [93, 98],  "waist": [75, 80]}},
+      {"label": "16", "ranges": {"chest": [98, 103], "waist": [80, 85]}},
+      {"label": "18", "ranges": {"chest": [103, 108], "waist": [85, 90]}}
+    ]
+  },
+  {
+    "brand": "Generic UK (starter)",
+    "section": "womens",
+    "garment": "dresses",
+    "notes": "Approximate UK high-street sizing to get you started. Replace with real brand charts.",
+    "sizes": [
+      {"label": "6",  "ranges": {"chest": [76, 80],  "waist": [58, 62], "hips": [84, 88]}},
+      {"label": "8",  "ranges": {"chest": [80, 84],  "waist": [62, 66], "hips": [88, 92]}},
+      {"label": "10", "ranges": {"chest": [84, 88],  "waist": [66, 70], "hips": [92, 96]}},
+      {"label": "12", "ranges": {"chest": [88, 93],  "waist": [70, 75], "hips": [96, 101]}},
+      {"label": "14", "ranges": {"chest": [93, 98],  "waist": [75, 80], "hips": [101, 106]}},
+      {"label": "16", "ranges": {"chest": [98, 103], "waist": [80, 85], "hips": [106, 111]}},
+      {"label": "18", "ranges": {"chest": [103, 108], "waist": [85, 90], "hips": [111, 116]}}
+    ]
+  },
+  {
+    "brand": "Generic UK (starter)",
+    "section": "womens",
+    "garment": "bottoms",
+    "notes": "Approximate UK high-street sizing to get you started. Replace with real brand charts.",
+    "sizes": [
+      {"label": "6",  "ranges": {"waist": [58, 62], "hips": [84, 88]}},
+      {"label": "8",  "ranges": {"waist": [62, 66], "hips": [88, 92]}},
+      {"label": "10", "ranges": {"waist": [66, 70], "hips": [92, 96]}},
+      {"label": "12", "ranges": {"waist": [70, 75], "hips": [96, 101]}},
+      {"label": "14", "ranges": {"waist": [75, 80], "hips": [101, 106]}},
+      {"label": "16", "ranges": {"waist": [80, 85], "hips": [106, 111]}},
+      {"label": "18", "ranges": {"waist": [85, 90], "hips": [111, 116]}}
+    ],
+    "lengths": [
+      {"label": "Short",   "inseam": [71, 76]},
+      {"label": "Regular", "inseam": [76, 81]},
+      {"label": "Long",    "inseam": [81, 86]}
+    ]
+  },
+  {
+    "brand": "Generic (starter)",
+    "section": "mens",
+    "garment": "tops",
+    "notes": "Approximate letter sizing to get you started. Replace with real brand charts.",
+    "sizes": [
+      {"label": "XS",  "ranges": {"chest": [82, 88],   "waist": [68, 74]}},
+      {"label": "S",   "ranges": {"chest": [88, 94],   "waist": [74, 80]}},
+      {"label": "M",   "ranges": {"chest": [94, 100],  "waist": [80, 86]}},
+      {"label": "L",   "ranges": {"chest": [100, 106], "waist": [86, 92]}},
+      {"label": "XL",  "ranges": {"chest": [106, 112], "waist": [92, 98]}},
+      {"label": "XXL", "ranges": {"chest": [112, 118], "waist": [98, 104]}}
+    ]
+  },
+  {
+    "brand": "Generic (starter)",
+    "section": "mens",
+    "garment": "outerwear",
+    "notes": "Approximate letter sizing to get you started. Replace with real brand charts.",
+    "sizes": [
+      {"label": "XS",  "ranges": {"chest": [82, 88]}},
+      {"label": "S",   "ranges": {"chest": [88, 94]}},
+      {"label": "M",   "ranges": {"chest": [94, 100]}},
+      {"label": "L",   "ranges": {"chest": [100, 106]}},
+      {"label": "XL",  "ranges": {"chest": [106, 112]}},
+      {"label": "XXL", "ranges": {"chest": [112, 118]}}
+    ]
+  },
+  {
+    "brand": "Generic (starter)",
+    "section": "mens",
+    "garment": "bottoms",
+    "notes": "Waist-size trousers (W28–W38). Approximate; replace with real brand charts.",
+    "sizes": [
+      {"label": "W28", "ranges": {"waist": [70, 73]}},
+      {"label": "W30", "ranges": {"waist": [75, 78]}},
+      {"label": "W32", "ranges": {"waist": [80, 83]}},
+      {"label": "W34", "ranges": {"waist": [85, 88]}},
+      {"label": "W36", "ranges": {"waist": [90, 93]}},
+      {"label": "W38", "ranges": {"waist": [95, 98]}}
+    ],
+    "lengths": [
+      {"label": "L30", "inseam": [74, 78]},
+      {"label": "L32", "inseam": [79, 83]},
+      {"label": "L34", "inseam": [84, 88]}
+    ]
+  }
+]
