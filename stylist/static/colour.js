@@ -60,7 +60,7 @@ function resultHtml(s) {
   const features = ['skin', 'hair', 'eyes'].map(f => {
     const c = s.features[f];
     return `<div class="feature">${c ? `<i style="background:${c.hex}"></i>` : '<i class="missing"></i>'}
-      <span>${FEATURE_LABELS[f]}</span><span class="muted">${c ? (c.source.startsWith('natural') ? 'set by you' : c.hex) : 'not found'}</span></div>`;
+      <span>${FEATURE_LABELS[f]}</span><span class="muted">${c ? (c.source.startsWith('natural') || c.source.startsWith('eye colour') ? 'set by you' : c.hex) : 'not found'}</span></div>`;
   }).join('');
 
   const matches = (s.ranked || []).map(r => `
@@ -68,6 +68,7 @@ function resultHtml(s) {
       ${esc(r.name)} <b>${r.match}%</b></button>`).join('');
 
   const hairOptions = Object.entries(colourState.seasons.natural_hair);
+  const eyeOptions = Object.entries(colourState.seasons.natural_eyes);
   const seasonOptions = Object.entries(seasons).map(([k, v]) => [k, v.name]);
 
   return `
@@ -100,6 +101,10 @@ function resultHtml(s) {
         <label>My natural hair colour (if dyed or hidden)
           <select id="natural-hair"><option value="">Use my photos</option>
           ${hairOptions.map(([k, v]) => `<option value="${k}"${s.settings?.natural_hair === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select>
+        </label>
+        <label>My eye colour (photos often lose it)
+          <select id="natural-eyes"><option value="">Use my photos</option>
+          ${eyeOptions.map(([k, v]) => `<option value="${k}"${s.settings?.natural_eyes === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select>
         </label>
         <label>I already know my season
           <select id="season-override"><option value="">Use the analysis${s.auto_season ? ` (${esc(seasons[s.auto_season].name)})` : ''}</option>
@@ -264,7 +269,7 @@ function wireColour() {
       await api(`/api/photos/${e.target.dataset.include}`, { method: 'PATCH', body: { included: e.target.checked } });
       await loadColour();
     }
-    if (e.target.id === 'natural-hair' || e.target.id === 'season-override') {
+    if (['natural-hair', 'natural-eyes', 'season-override'].includes(e.target.id)) {
       await saveColourSettings({});
     }
   });
@@ -281,6 +286,7 @@ function wireColour() {
 async function saveColourSettings(changes) {
   const body = {
     natural_hair: $('#natural-hair')?.value || null,
+    natural_eyes: $('#natural-eyes')?.value || null,
     season_override: $('#season-override')?.value || null,
     ...changes,
   };

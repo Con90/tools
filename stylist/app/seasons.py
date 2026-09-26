@@ -24,10 +24,21 @@ def _clamp(x: float) -> float:
     return float(max(-1.0, min(1.0, x)))
 
 
+def neutral_skin_hue(L: float) -> float:
+    """Hue angle of a neutral undertone, for skin of lightness L*.
+
+    Lighter skin shows more of the blood beneath it, so it reads redder
+    (lower hue) at the same undertone: measured skin hue averages about 50°
+    for fair European skin and nearer 57–60° for deeper skin. Judging all
+    skin against one reference made fair skin read pink.
+    """
+    return 50 + 8 * max(0.0, min(1.0, (65 - L) / 20))
+
+
 def scores(skin, hair=None, eyes=None) -> dict:
     """Lab colours → warmth / depth / clarity scores."""
     sL, sC, sh = lch(skin)
-    parts_w = [(0.55, _clamp((sh - 57) / 10))]      # pink (low hue) ↔ golden (high hue) skin
+    parts_w = [(0.55, _clamp((sh - neutral_skin_hue(sL)) / 10))]  # pink (low hue) ↔ golden (high hue)
     parts_d = [(0.4, _clamp((65 - sL) / 15))]
     parts_c = [(0.1, _clamp((sC - 20) / 8))]       # clear vs greyed skin
 
@@ -248,6 +259,20 @@ SEASONS = {
         "metals": "Bright silver, platinum",
         "tips": "Pair black or white with one vivid colour. Muted, earthy or dusty shades fall flat on you.",
     },
+}
+
+NATURAL_EYES = {
+    # Typical iris colours in Lab: photos often lose eye colour (small, shadowed,
+    # grey-green reading as grey), so people can say what their eyes really are.
+    "dark_brown": ("Dark brown", [24, 6, 9]),
+    "light_brown": ("Light brown", [35, 8, 18]),
+    "hazel": ("Hazel", [40, 4, 20]),
+    "amber": ("Amber", [45, 10, 30]),
+    "green": ("Green", [45, -6, 15]),
+    "grey_green": ("Grey-green", [48, -4, 7]),
+    "blue": ("Blue", [52, -3, -22]),
+    "grey_blue": ("Grey-blue", [55, -2, -10]),
+    "grey": ("Grey", [55, -1, 1]),
 }
 
 NATURAL_HAIR = {

@@ -143,3 +143,12 @@ def test_backlit_photo_is_flagged_and_result_provisional():
     client.patch(f"/api/photos/{photo['id']}", json={"included": False})
     _upload(pid)
     assert client.get(f"/api/profiles/{pid}/colour").json()["poor_light_photos"] == 0
+
+
+def test_eye_colour_setting_overrides_photos():
+    pid = _profile()
+    _upload(pid)
+    s = client.put(f"/api/profiles/{pid}/colour", json={"natural_eyes": "green"}).json()
+    assert s["features"]["eyes"]["source"] == "eye colour: Green"
+    assert "green" in client.get("/api/seasons").json()["natural_eyes"]
+    assert client.put(f"/api/profiles/{pid}/colour", json={"natural_eyes": "violet"}).status_code == 422

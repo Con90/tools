@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 
 from . import db, face
 from .colour import lab_to_hex, lch, linear_to_lab, white_gains
-from .seasons import NATURAL_HAIR, SEASONS, describe_scores, rank_seasons, scores
+from .seasons import NATURAL_EYES, NATURAL_HAIR, SEASONS, describe_scores, rank_seasons, scores
 
 router = APIRouter()
 
@@ -95,6 +95,10 @@ def colour_summary(profile: dict) -> dict:
     if hair_key in NATURAL_HAIR:
         label, lab = NATURAL_HAIR[hair_key]
         features["hair"] = {"lab": lab, "hex": lab_to_hex(lab), "photos": 0, "source": f"natural hair: {label}"}
+    eyes_key = settings.get("natural_eyes")
+    if eyes_key in NATURAL_EYES:
+        label, lab = NATURAL_EYES[eyes_key]
+        features["eyes"] = {"lab": lab, "hex": lab_to_hex(lab), "photos": 0, "source": f"eye colour: {label}"}
 
     # A white reference fixes colour casts but not a face in shadow, so only
     # uncorrected photos with lighting problems make the result provisional.
@@ -125,7 +129,8 @@ def colour_summary(profile: dict) -> dict:
 
 @router.get("/api/seasons")
 def list_seasons():
-    return {"seasons": SEASONS, "natural_hair": {k: label for k, (label, _) in NATURAL_HAIR.items()}}
+    return {"seasons": SEASONS, "natural_hair": {k: label for k, (label, _) in NATURAL_HAIR.items()},
+            "natural_eyes": {k: label for k, (label, _) in NATURAL_EYES.items()}}
 
 
 @router.get("/api/profiles/{pid}/photos")
@@ -223,6 +228,7 @@ def get_colour(pid: int):
 class ColourSettings(BaseModel):
     season_override: str | None = None
     natural_hair: str | None = None
+    natural_eyes: str | None = None
 
 
 @router.put("/api/profiles/{pid}/colour")
@@ -232,6 +238,8 @@ def put_colour(pid: int, body: ColourSettings):
         raise HTTPException(422, "unknown season")
     if body.natural_hair and body.natural_hair not in NATURAL_HAIR:
         raise HTTPException(422, "unknown hair colour")
+    if body.natural_eyes and body.natural_eyes not in NATURAL_EYES:
+        raise HTTPException(422, "unknown eye colour")
     settings = {k: v for k, v in body.model_dump().items() if v}
     profile = db.update_row("profiles", pid, {"colour": settings})
     return colour_summary(profile)

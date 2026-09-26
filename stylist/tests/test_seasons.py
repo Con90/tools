@@ -52,3 +52,12 @@ def test_every_season_has_a_complete_palette():
 
 def test_natural_hair_presets():
     assert all(len(lab) == 3 for _, lab in NATURAL_HAIR.values())
+
+
+def test_fair_skin_is_judged_against_a_fair_skin_reference():
+    from app.seasons import neutral_skin_hue
+    assert neutral_skin_hue(70) == 50 and neutral_skin_hue(40) == 58
+    # Typical fair skin (hue ~50°) reads neutral rather than pink/cool…
+    assert abs(scores([70, 16, 19])["warmth"]) < 0.1
+    # …while the same hue on deeper skin still reads cool.
+    assert scores([45, 16, 19])["warmth"] < -0.3
