@@ -104,3 +104,18 @@ def test_rejects_non_image_and_cleans_up_on_delete():
     assert client.delete(f"/api/profiles/{pid}").status_code == 204
     assert client.get(f"/api/photos/{photo['id']}/image").status_code == 404
     assert len(list(db.photos_dir().iterdir())) == files_before - 1
+
+
+def test_full_length_photo_zooms_in_on_the_face():
+    """A small face in a big photo is missed by the face detector alone."""
+    portrait = Image.open(io.BytesIO(PORTRAIT)).resize((200, 210))
+    canvas = Image.new("RGB", (1800, 2400), (225, 222, 215))
+    canvas.paste(portrait, (800, 120))
+    buf = io.BytesIO()
+    canvas.save(buf, "JPEG")
+    photo = _upload(_profile(), buf.getvalue()).json()
+    assert photo["error"] is None
+    assert "skin" in photo["colours"] and "hair" in photo["colours"]
+    assert any("small" in w for w in photo["warnings"])
+    x0, y0, x1, y1 = photo["face_box"]
+    assert 0.4 < x0 < x1 < 0.6 and y1 < 0.2  # mapped back onto the full photo

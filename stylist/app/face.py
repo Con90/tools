@@ -33,7 +33,7 @@ MODEL_URLS = {
         "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite",
 }
 
-MAX_SIDE = 1600  # photos are downscaled to this on upload
+MAX_SIDE = 2600  # photos are downscaled to this on upload (keeps detail in full-length shots)
 
 # Face-mesh landmark indices.
 CHEEKS = (50, 280)
@@ -168,10 +168,52 @@ def sample_point(img: np.ndarray, x: float, y: float, feature: str) -> list[floa
     return _trimmed_linear(img[mask])
 
 
-def analyse(img: np.ndarray) -> dict:
-    """Automatic skin / hair / eye sampling for one photo."""
+def _head_box(seg: np.ndarray, shape) -> tuple[int, int, int, int] | None:
+    """Square crop around the face-skin region the segmenter found, with room for hair."""
+    h, w = shape[:2]
+    if seg.shape != (h, w):
+        seg = np.array(Image.fromarray(seg).resize((w, h), Image.NEAREST))
+    ys, xs = np.nonzero(seg == FACE_SKIN)
+    if len(xs) < 50:
+        return None
+    x0, x1, y0, y1 = xs.min(), xs.max(), ys.min(), ys.max()
+    cx, cy, side = (x0 + x1) / 2, (y0 + y1) / 2, max(x1 - x0, y1 - y0) * 2.2
+    return (int(max(0, cx - side / 2)), int(max(0, cy - side / 2)),
+            int(min(w, cx + side / 2)), int(min(h, cy + side / 2)))
+
+
+def analyse(img: np.ndarray, _scale: float = 1.0) -> dict:
+    """Automatic skin / hair / eye sampling for one photo.
+
+    The face detector is made for close-ups; in a full-length photo the face
+    is too small for it. Then the head is located with the segmenter, cropped,
+    enlarged and analysed, and the results are mapped back onto the photo.
+    """
     h, w = img.shape[:2]
     faces, seg = _run_models(img)
+    if not faces and _scale == 1.0:
+        box = _head_box(seg, img.shape)
+        if box:
+            x0, y0, x1, y1 = box
+            crop = Image.fromarray(img[y0:y1, x0:x1])
+            scale = max(1.0, 640 / max(crop.size))
+            if scale > 1:
+                crop = crop.resize((round(crop.width * scale), round(crop.height * scale)), Image.LANCZOS)
+            try:
+                sub = analyse(np.array(crop), _scale=scale)
+            except AnalysisError:
+                sub = None
+            if sub:
+                cw, ch = x1 - x0, y1 - y0
+
+                def to_full(pt):
+                    return [(x0 + pt[0] * cw) / w, (y0 + pt[1] * ch) / h]
+
+                sub["points"] = {k: [to_full(p) for p in v] for k, v in sub["points"].items()}
+                bx0, by0 = to_full(sub["face_box"][:2])
+                bx1, by1 = to_full(sub["face_box"][2:])
+                sub["face_box"] = [bx0, by0, bx1, by1]
+                return sub
     if not faces:
         raise AnalysisError("No face found. Use a clear, front-facing photo with your whole face visible.")
     warnings = []
@@ -186,7 +228,7 @@ def analyse(img: np.ndarray) -> dict:
     x0, y0 = all_pts.min(axis=0)
     x1, y1 = all_pts.max(axis=0)
     face_w = x1 - x0
-    if face_w < 200:
+    if face_w / _scale < 200:
         warnings.append("Your face is quite small in this photo; a closer shot gives more reliable colours.")
 
     if seg.shape != (h, w):  # the segmenter may return its own resolution
@@ -220,7 +262,7 @@ def analyse(img: np.ndarray) -> dict:
         sclera.append(img[opening & ~_disc(img.shape, centre[0], centre[1], r * 1.15)])
     samples["eyes"] = _trimmed_linear(np.concatenate(eye_px), trim=(0.1, 0.75))
     points["eyes"] = eye_centres
-    if min(radii) < 5:
+    if min(radii) / _scale < 5:  # enlarging a crop adds no real detail
         warnings.append("Eyes are too small in this photo to read their colour reliably.")
         samples["eyes"] = None
 
