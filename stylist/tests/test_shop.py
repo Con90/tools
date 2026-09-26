@@ -94,9 +94,14 @@ def test_dislikes():
     assert shop.flagged("Block heel boots", {"heels"}) == ["heels"]
 
 
-def test_normalise_prefers_product_link():
-    p = shop.normalise({"title": "T", "product_link": "https://a", "link": "https://b", "extracted_price": 10})
-    assert p["link"] == "https://a" and p["value"] == 10.0
+def test_normalise_prefers_the_shop_link():
+    p = shop.normalise({"title": "T", "product_link": "https://www.google.com/shopping/product/1",
+                        "link": "https://shop.example/p1", "extracted_price": 10,
+                        "serpapi_immersive_product_api": "https://serpapi.com/search.json?engine=google_immersive_product&page_token=x"})
+    assert p["link"] == p["merchant_link"] == "https://shop.example/p1" and p["value"] == 10.0
+    assert p["immersive_api"].startswith("https://serpapi.com/")
+    google_only = shop.normalise({"title": "T", "product_link": "https://www.google.com/shopping/product/1"})
+    assert google_only["link"].startswith("https://www.google.com") and google_only["merchant_link"] is None
     assert shop.normalise({"title": "T"}) is None
 
 

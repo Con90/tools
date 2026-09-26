@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import io
 import uuid
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
+from PIL import Image
 from pydantic import BaseModel, Field
 
-from . import db, face, settings, shop, tryon
+from . import db, face, garments, settings, tryon
 
 router = APIRouter()
 
@@ -89,9 +91,10 @@ def make_tryon(pid: int, req: TryOnIn):
         except tryon.TryOnError as e:
             raise HTTPException(422, "The garment image couldn't be read.") from e
     elif item:
-        garment = shop.fetch_thumbnail(item.get("thumbnail"))
-        if not garment:
-            raise HTTPException(422, "Couldn't download this product's picture. Upload a garment image instead.")
+        found = garments.resolve(item)
+        if not found:
+            raise HTTPException(422, "Couldn't get a picture of this product from the shop. Upload one instead.")
+        garment = found["image"]
     else:
         raise HTTPException(422, "Choose a saved item or upload a garment image.")
 
@@ -137,6 +140,31 @@ def delete_profile_tryons(pid: int) -> None:
     for t in db.list_tryons(pid):
         (_tryon_dir() / t["filename"]).unlink(missing_ok=True)
         db.delete_row("tryons", t["id"])
+
+
+# --- garment pictures ----------------------------------------------------------------------
+
+
+@router.get("/api/saved/{saved_id}/garment")
+def garment_info(saved_id: int):
+    """Find (and cache) the clearest picture of a saved product, from the shop's own page if possible."""
+    item = _found(db.get_row("saved_items", saved_id))["product"]
+    found = garments.resolve(item)
+    if not found:
+        return {"found": False}
+    return {"found": True, "source": found["source"], "width": found["width"], "height": found["height"],
+            "clear": min(found["width"], found["height"]) >= garments.MIN_SIDE,
+            "url": f"/api/saved/{saved_id}/garment.jpg"}
+
+
+@router.get("/api/saved/{saved_id}/garment.jpg")
+def garment_image(saved_id: int):
+    item = _found(db.get_row("saved_items", saved_id))["product"]
+    found = garments.resolve(item)
+    if not found:
+        raise HTTPException(404, "not found")
+    fmt = (Image.open(io.BytesIO(found["image"])).format or "JPEG").lower()
+    return Response(found["image"], media_type=f"image/{'jpeg' if fmt == 'jpg' else fmt}")
 
 
 # --- key ---------------------------------------------------------------------------------------

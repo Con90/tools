@@ -2,7 +2,7 @@
 // Uses helpers from app.js ($, $$, api, esc, fillSelect, state, show).
 
 const tryonState = { key: null, photos: [], saved: [], results: [], photoId: null, savedId: null,
-                     garmentUpload: null, busy: false, error: '' };
+                     garmentUpload: null, garmentInfo: {}, showUpload: false, busy: false, error: '' };
 
 const TRYON_TYPES = { tops: 'Top', knitwear: 'Knitwear', outerwear: 'Coat / jacket', bottoms: 'Trousers',
                       skirts: 'Skirt', dresses: 'Dress / jumpsuit' };
@@ -23,6 +23,7 @@ async function renderTryon() {
   if (!tryonState.photos.some(p => p.id === tryonState.photoId)) tryonState.photoId = tryonState.photos.at(-1)?.id ?? null;
   if (!tryonState.saved.some(s => s.saved_id === tryonState.savedId)) tryonState.savedId = null;
   drawTryon();
+  loadGarment(tryonState.savedId);
 }
 
 function drawTryonSetup() {
@@ -64,14 +65,41 @@ function photoPicker() {
   </section>`;
 }
 
+function garmentPreview() {
+  const s = tryonState;
+  if (s.garmentUpload) {
+    return `<div class="garment-preview"><img src="${s.garmentUpload.dataUrl}" alt="Your garment picture">
+      <div><p><b>Using your picture.</b></p>
+        <label>It's a <select id="garment-type">${Object.entries(TRYON_TYPES).map(([k, v]) =>
+          `<option value="${k}"${s.garmentUpload.type === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></label>
+        <button type="button" class="link" id="garment-clear">Use the shop's picture instead</button></div></div>`;
+  }
+  if (!s.savedId) return '';
+  const g = s.garmentInfo[s.savedId];
+  if (!g || g.loading) {
+    return '<p class="status garment-status">Getting the product picture from the shop…</p>';
+  }
+  if (!g.found) {
+    return `<p class="error">Couldn't get a picture of this product from the shop.</p>${uploadControl()}`;
+  }
+  return `<div class="garment-preview"><img src="${g.url}" alt="Product picture">
+    <div><p class="muted">Picture from ${esc(g.source)} (${g.width}×${g.height})</p>
+      ${g.clear ? '' : `<p class="note">Only a small picture was available, so the try-on may look blurry.</p>
+        ${s.showUpload ? uploadControl() : '<button type="button" class="link" id="show-upload">Use a clearer picture of your own</button>'}`}
+    </div></div>`;
+}
+
+function uploadControl() {
+  return `<label class="upload-btn secondary">Upload a garment picture<input type="file" id="garment-input" accept="image/*"></label>`;
+}
+
 function garmentPicker() {
   const items = tryonState.saved;
   const upload = tryonState.garmentUpload;
   return `<section class="card">
     <h2>2. What to try on</h2>
-    ${items.length ? `<p class="hint">Pick a saved item. Shop thumbnails are small, so if a result looks blurry, save a
-      clearer product picture from the shop's page and upload it below.</p>` :
-      '<p class="hint">Save items from the <a href="#" data-goto="shop">Shop</a> tab, or upload a picture of a garment below.</p>'}
+    ${items.length ? '<p class="hint">Pick a saved item. The app fetches the product picture from the shop for you.</p>' :
+      '<p class="hint">Save items from the <a href="#" data-goto="shop">Shop</a> tab to try them on here.</p>'}
     <div class="pick-grid">${items.map(s => {
       const ok = s.garment in TRYON_TYPES;
       return `<label class="pick-card item${s.saved_id === tryonState.savedId && !upload ? ' selected' : ''}${ok ? '' : ' disabled'}"
@@ -81,14 +109,20 @@ function garmentPicker() {
         <span class="pick-title">${esc(s.title)}</span>
       </label>`;
     }).join('')}</div>
-    <div class="garment-upload">
-      <label class="upload-btn secondary">Upload a garment picture<input type="file" id="garment-input" accept="image/*"></label>
-      ${upload ? `<img src="${upload.dataUrl}" alt="Uploaded garment" class="garment-thumb">
-        <label>It's a <select id="garment-type">${Object.entries(TRYON_TYPES).map(([k, v]) =>
-          `<option value="${k}"${upload.type === k ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></label>
-        <button type="button" class="link" id="garment-clear">Use a saved item instead</button>` : ''}
-    </div>
+    ${garmentPreview()}
   </section>`;
+}
+
+// Look up (and cache) the shop's picture for the selected item.
+async function loadGarment(savedId) {
+  if (!savedId || tryonState.garmentInfo[savedId]) return;
+  tryonState.garmentInfo[savedId] = { loading: true };
+  try {
+    tryonState.garmentInfo[savedId] = await api(`/api/saved/${savedId}/garment`);
+  } catch {
+    tryonState.garmentInfo[savedId] = { found: false };
+  }
+  if (tryonState.savedId === savedId) drawTryon();
 }
 
 function tryonCard(t) {
@@ -110,14 +144,17 @@ function tryonCard(t) {
 function drawTryon() {
   drawTryonSetup();
   const s = tryonState;
-  const ready = s.key.configured && s.photoId && (s.savedId || s.garmentUpload) && !s.busy;
+  const g = s.garmentInfo[s.savedId];
+  const garmentReady = s.garmentUpload || (s.savedId && g && !g.loading && g.found);
+  const ready = s.key.configured && s.photoId && garmentReady && !s.busy;
   $('#tryon-content').innerHTML = `
     <div class="tryon-steps">${photoPicker()}${garmentPicker()}</div>
     <div class="actions tryon-go">
       <button type="button" id="tryon-go"${ready ? '' : ' disabled'}>${s.busy ? 'Dressing you…' : 'Try it on'}</button>
       <span class="status">${s.busy ? 'This usually takes 10–20 seconds.' :
         !s.key.configured ? 'Add a FASHN key above first.' : !s.photoId ? 'Add a photo of yourself.' :
-        !(s.savedId || s.garmentUpload) ? 'Pick something to try on.' : ''}</span>
+        !(s.savedId || s.garmentUpload) ? 'Pick something to try on.' :
+        !garmentReady ? (g?.loading ? 'Getting the product picture…' : 'Upload a garment picture to continue.') : ''}</span>
     </div>
     <p class="muted small-print">Your photo and the garment picture are sent to FASHN to create the image. The app asks
       FASHN to return the result directly rather than store it, and keeps it only on this computer (<code>data/tryons</code>).
@@ -144,6 +181,7 @@ async function tryonWith(savedId, profileId) {
   await renderTryon();
   tryonState.savedId = savedId;
   drawTryon();
+  loadGarment(savedId);
 }
 
 function wireTryon() {
@@ -152,7 +190,10 @@ function wireTryon() {
   root.addEventListener('change', async e => {
     const t = e.target;
     if (t.name === 'tryon-photo') { tryonState.photoId = Number(t.value); drawTryon(); }
-    if (t.name === 'tryon-item') { tryonState.savedId = Number(t.value); tryonState.garmentUpload = null; drawTryon(); }
+    if (t.name === 'tryon-item') {
+      tryonState.savedId = Number(t.value); tryonState.garmentUpload = null; tryonState.showUpload = false;
+      drawTryon(); loadGarment(tryonState.savedId);
+    }
     if (t.id === 'garment-type') tryonState.garmentUpload.type = t.value;
     if (t.id === 'garment-input' && t.files[0]) {
       tryonState.garmentUpload = { dataUrl: await readFileAsDataUrl(t.files[0]), type: 'tops' };
@@ -184,6 +225,7 @@ function wireTryon() {
     if (t.id === 'fashn-change') $('#fashn-edit').hidden = false;
     if (t.id === 'fashn-remove') { tryonState.key = await api('/api/settings/fashn', { method: 'PUT', body: { key: '' } }); drawTryon(); }
     if (t.id === 'garment-clear') { tryonState.garmentUpload = null; drawTryon(); }
+    if (t.id === 'show-upload') { tryonState.showUpload = true; drawTryon(); }
     if (t.dataset.deleteTryon && confirm('Delete this try-on?')) {
       await api(`/api/tryons/${t.dataset.deleteTryon}`, { method: 'DELETE' });
       tryonState.results = await api(`/api/profiles/${$('#tryon-profile').value}/tryons`);

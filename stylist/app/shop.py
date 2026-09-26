@@ -83,8 +83,14 @@ def _get_json(url: str) -> dict:
 
 
 def normalise(item: dict) -> dict | None:
-    """One SerpAPI shopping result → the fields the app uses."""
-    link = item.get("product_link") or item.get("link")
+    """One SerpAPI shopping result → the fields the app uses.
+
+    `link` goes to the shop itself when the result has one, otherwise to
+    Google's product page; `immersive_api` is SerpAPI's product lookup, used
+    later to find the shop and full-size pictures for try-on.
+    """
+    merchant = item.get("link") if item.get("link") and "google." not in item.get("link", "") else None
+    link = merchant or item.get("product_link") or item.get("link")
     if not item.get("title") or not link:
         return None
     price = item.get("extracted_price")
@@ -95,6 +101,8 @@ def normalise(item: dict) -> dict | None:
         "price": item.get("price") or "",
         "value": float(price) if isinstance(price, (int, float)) else None,
         "link": link,
+        "merchant_link": merchant,
+        "immersive_api": item.get("serpapi_immersive_product_api"),
         "thumbnail": item.get("thumbnail"),
         "rating": item.get("rating"),
         "reviews": item.get("reviews"),

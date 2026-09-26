@@ -113,8 +113,23 @@ everything runs offline.
    (full length for trousers and dresses): facing the camera, arms by your
    sides, plain background. These photos are kept separate from your colour
    photos. Pick a saved item, or press *Try on* on a saved item in the Shop
-   tab. You can also upload a clearer garment picture, since shop thumbnails
-   are small. Results appear as before-and-after pairs you can download.
+   tab. The app fetches the product picture from the shop itself; you don't
+   upload anything. Results appear as before-and-after pairs you can
+   download.
+
+   **Where the product picture comes from:** the app tries each of these in
+   turn, and the first picture at least 400 px on its shorter side is used.
+   1. The shop's product page. Shops publish their main product photo for
+      search engines and link previews (structured data, `og:image`), and
+      the app reads it from there.
+   2. If the search result pointed to Google rather than the shop, SerpAPI's
+      product lookup finds the shop's link or Google's full-size product
+      photos. This costs one SerpAPI search, once per item.
+   3. Otherwise the small search thumbnail, with a note that the result may
+      be blurry. Only then does the app offer an optional upload.
+
+   Pictures are cached, so each item is only fetched once. Some shops block
+   automated requests; those fall through to the next step.
 
    Try-on uses [FASHN](https://fashn.ai) (`tryon-v1.6`, about $0.05–0.08
    per image). Add an API key from [app.fashn.ai/api](https://app.fashn.ai/api)
@@ -220,6 +235,7 @@ python -m pytest
 | `app/shop_api.py` | Search, saved items and search-key endpoints |
 | `app/settings.py` | Local settings file (API keys, country) |
 | `app/tryon.py` | FASHN try-on call (official `fashn` SDK) and error handling |
+| `app/garments.py` | Finds the product picture on the shop's page (JSON-LD / og:image) or via SerpAPI |
 | `app/tryon_api.py` | Body photos, try-on and results endpoints |
 | `app/main.py` | FastAPI routes; serves the front end |
 | `static/` | Single-page front end (plain HTML/CSS/JS, no build step) |

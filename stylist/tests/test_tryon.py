@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from app import settings, shop, tryon
+from app import garments, settings, shop, tryon
 from app.main import app
 
 client = TestClient(app)
@@ -43,6 +43,7 @@ def fake(monkeypatch):
     f = FakeFashn()
     monkeypatch.setattr(tryon, "_client", lambda: f)
     monkeypatch.setattr(shop, "fetch_thumbnail", lambda url: jpeg((200, 60, 40)) if url else None)
+    monkeypatch.setattr(garments, "_get", lambda url, limit, timeout=12: None)  # no shop pages in these tests
     return f
 
 
@@ -118,6 +119,7 @@ def _status_error(cls, code):
 def test_tryon_errors_are_explained(monkeypatch, fake_client, message):
     monkeypatch.setattr(tryon, "_client", lambda: fake_client)
     monkeypatch.setattr(shop, "fetch_thumbnail", lambda url: jpeg())
+    monkeypatch.setattr(garments, "_get", lambda url, limit, timeout=12: None)
     pid, photo_id, saved_id = _setup()
     r = client.post(f"/api/profiles/{pid}/tryons", json={"photo_id": photo_id, "saved_id": saved_id})
     assert r.status_code == 502 and message in r.json()["detail"]
@@ -127,6 +129,7 @@ def test_no_key_and_key_settings(monkeypatch):
     monkeypatch.delenv("FASHN_API_KEY", raising=False)
     pid, photo_id, saved_id = _setup()
     monkeypatch.setattr(shop, "fetch_thumbnail", lambda url: jpeg())
+    monkeypatch.setattr(garments, "_get", lambda url, limit, timeout=12: None)
     r = client.post(f"/api/profiles/{pid}/tryons", json={"photo_id": photo_id, "saved_id": saved_id})
     assert r.status_code == 502 and "Add a FASHN API key" in r.json()["detail"]
     assert client.put("/api/settings/fashn", json={"key": "short"}).status_code == 422

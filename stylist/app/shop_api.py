@@ -119,8 +119,8 @@ def list_saved(pid: int):
 @router.post("/api/profiles/{pid}/saved", status_code=201)
 def save_item(pid: int, body: SaveIn):
     _found(db.get_row("profiles", pid))
-    product = {k: body.product.get(k) for k in ("id", "title", "source", "price", "value", "link", "thumbnail",
-                                                "colour", "size", "garment")}
+    product = {k: body.product.get(k) for k in ("id", "title", "source", "price", "value", "link", "merchant_link",
+                                                "immersive_api", "thumbnail", "colour", "size", "garment")}
     if not product["id"] or not product["title"] or not product["link"]:
         raise HTTPException(422, "product needs an id, title and link")
     existing = next((s for s in db.list_saved(pid) if s["product"]["id"] == product["id"]), None)
