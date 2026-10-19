@@ -11,15 +11,61 @@ the official PubMed API, which indexes essentially every biomedical journal — 
 it's more reliable and complete than scraping individual journal websites, and
 it stays within NCBI's terms of use.
 
-## Install
+## Quick start: one click
 
 ```bash
+chmod +x run.sh   # once
+./run.sh          # or double-click it and choose "Run in Terminal"
+```
+
+`run.sh` sets up its own virtual environment on the first run (no system-wide
+`pip install` needed), then asks you what to look for:
+
+```
+What would you like to do?
+  1) Enter a new search
+  2) Run saved searches
+Choose 1 or 2 [1]: 1
+Search terms: scRNA-seq, single cell RNA sequencing
+Field(s), or Enter for none: immunology
+Journal(s), or Enter for all:
+How many days back? (0 = no limit) [30]: 14
+Save this search so you can re-run it later? (y/N): y
+Name for this search [scrna_seq_immunology]:
+Skip articles already reported by an earlier run? (Y/n):
+```
+
+- **Search terms**: articles mentioning *any* of them in the title or abstract.
+- **Field**: narrows to a field, matched against MeSH headings and title/abstract.
+- **Journals**: limits results to those journals.
+- **Save**: adds the search to `searches.yaml`, so next time you can pick it from
+  option 2 without retyping anything.
+
+Advanced: if your search terms contain a PubMed field tag (e.g.
+`proteomics[mh] AND human[mh]`), they're used as a raw PubMed query.
+
+On a Mac, rename `run.sh` to `run.command` so a double-click in Finder runs it.
+
+## Manual install
+
+To run `pubmed_scraper.py` directly, install the two dependencies into a
+virtual environment (newer Linux and macOS block system-wide `pip install`):
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Quick start
+## Command-line use
+
+Every option can also be given as arguments, which is handy for scripts and
+scheduled runs (`./run.sh` forwards any arguments it's given):
 
 ```bash
+# Ask questions step by step (what ./run.sh does with no arguments).
+python3 pubmed_scraper.py --interactive
+
 # Run every enabled search in searches.yaml, articles from the last 30 days.
 python3 pubmed_scraper.py
 
@@ -34,8 +80,9 @@ Output is written to `output/pubmed_<timestamp>.csv` and `.txt`.
 
 ## Defining searches
 
-Search terms live in **`searches.yaml`**, so you can add new topics later
-without touching the code. Each entry's `query` is passed straight to PubMed and
+Saved searches live in **`searches.yaml`**. The easiest way to add one is to
+answer "y" to *Save this search* in interactive mode, but you can also edit the
+file directly. Each entry's `query` is passed straight to PubMed and
 supports the full [PubMed search syntax](https://pubmed.ncbi.nlm.nih.gov/help/)
 (field tags like `[Title/Abstract]`, `[MeSH Terms]`, `[Journal]`; boolean
 `AND`/`OR`/`NOT`; quoted phrases).
@@ -70,6 +117,7 @@ date window regardless of history.
 
 | Flag | Purpose |
 |------|---------|
+| `-i`, `--interactive` | Ask for terms, field, journals and date range step by step. |
 | `--search NAME` | Run only one named search (ignores its `enabled` flag). |
 | `--query "..."` | Ad-hoc PubMed query instead of the config. |
 | `--days N` | Look back N days (`0` = no date limit). |
@@ -96,5 +144,5 @@ Run `python3 pubmed_scraper.py --help` for the full list.
 It's a plain script, so you can schedule it — e.g. a weekly cron job:
 
 ```cron
-0 8 * * 1  cd /path/to/tools && /usr/bin/python3 pubmed_scraper.py --days 7
+0 8 * * 1  /path/to/tools/pubmed-scraper/run.sh --days 7
 ```

@@ -2,10 +2,13 @@
 #
 # run.sh — one-click launcher for pubmed_scraper.py
 #
-# First run: creates a local virtual environment (.venv) and installs the
-# dependencies. Every run after that just activates it and runs the tool.
-# Any arguments you pass are forwarded to the scraper, e.g.:
+# Double-click it (choose "Run in Terminal") or run ./run.sh with no arguments
+# and it asks what to search for. Any arguments are passed straight to the
+# scraper instead, for scripted or scheduled use, e.g.:
 #     ./run.sh --search proteomics --days 14
+#
+# The first run creates a local virtual environment (.venv) and installs the
+# dependencies; later runs reuse it.
 #
 set -euo pipefail
 
@@ -15,23 +18,35 @@ cd "$(dirname "$0")"
 
 VENV=".venv"
 
-# Create the virtual environment on first run.
-if [ ! -d "$VENV" ]; then
-    echo "First run: setting up virtual environment in $VENV ..."
-    python3 -m venv "$VENV"
+pause() {
+    echo
+    read -r -p "Press Enter to close..." _ || true
+}
+
+# (Re)build the virtual environment if it's missing or incomplete, e.g. after
+# a first run that was interrupted.
+if ! "$VENV/bin/python" -c "import requests, yaml" 2>/dev/null; then
+    echo "Setting up the Python environment (first run only)..."
+    rm -rf "$VENV"
+    if ! python3 -m venv "$VENV"; then
+        rm -rf "$VENV"
+        echo "Couldn't create a virtual environment."
+        echo "On Debian/Ubuntu, install support for it with:  sudo apt install python3-venv"
+        [ $# -eq 0 ] && pause
+        exit 1
+    fi
     "$VENV/bin/pip" install --quiet --upgrade pip
     "$VENV/bin/pip" install --quiet -r requirements.txt
     echo "Setup complete."
 fi
 
-# Run the scraper using the venv's Python, forwarding any arguments.
-"$VENV/bin/python" pubmed_scraper.py "$@"
-
-echo
-echo "Done. Results are in the 'output' folder."
-
-# Keep the window open if the script was double-clicked from a file manager
-# (i.e. not launched from an interactive terminal).
-if [ ! -t 0 ]; then
-    read -r -p "Press Enter to close..."
+if [ $# -eq 0 ]; then
+    # No arguments (e.g. double-clicked): ask for the search interactively and
+    # keep the window open afterwards so the results can be read.
+    status=0
+    "$VENV/bin/python" pubmed_scraper.py --interactive || status=$?
+    pause
+    exit "$status"
 fi
+
+"$VENV/bin/python" pubmed_scraper.py "$@"

@@ -10,10 +10,14 @@ author list formatted in APA style, the journal, and a link to the article.
 Search terms live in a YAML config file (searches.yaml by default), so new
 searches — e.g. proteomics, or scRNA-seq restricted to immunology — can be
 added later without touching this script. You can also run a one-off query
-straight from the command line with --query.
+straight from the command line with --query, or use --interactive to be asked
+for your search terms step by step (this is what run.sh does by default).
 
 Examples
 --------
+    # Answer a few questions instead of editing the config
+    python3 pubmed_scraper.py --interactive
+
     # Run every enabled search in searches.yaml, articles from the last 30 days
     python3 pubmed_scraper.py
 
@@ -43,6 +47,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import sys
 import time
 import xml.etree.ElementTree as ET
@@ -486,17 +491,27 @@ def run_search(client: PubMedClient, name: str, query: str, days: int | None,
     return articles
 
 
+def resolve_search(s: dict, defaults: dict, days: int | None = None,
+                   max_results: int | None = None,
+                   datetype: str | None = None) -> dict:
+    """Fill in a search's settings: explicit overrides, then the search, then defaults."""
+    return {
+        "name": s.get("name", "unnamed"),
+        "query": s["query"],
+        "days": days if days is not None else s.get("days", defaults.get("days", 30)),
+        "max_results": max_results if max_results is not None
+                       else s.get("max_results", defaults.get("max_results", 200)),
+        "datetype": datetype or s.get("datetype", defaults.get("datetype", "pdat")),
+    }
+
+
 def build_search_list(config: dict, args) -> list[dict]:
     defaults = config.get("defaults", {})
+    overrides = {"days": args.days, "max_results": args.max, "datetype": args.datetype}
 
     if args.query:
-        return [{
-            "name": args.name or "adhoc",
-            "query": args.query,
-            "days": args.days if args.days is not None else defaults.get("days", 30),
-            "max_results": args.max if args.max is not None else defaults.get("max_results", 200),
-            "datetype": args.datetype or defaults.get("datetype", "pdat"),
-        }]
+        adhoc = {"name": args.name or "adhoc", "query": args.query}
+        return [resolve_search(adhoc, defaults, **overrides)]
 
     searches = []
     for s in config.get("searches", []):
@@ -504,14 +519,216 @@ def build_search_list(config: dict, args) -> list[dict]:
             continue
         if not args.search and not s.get("enabled", True):
             continue
-        searches.append({
-            "name": s.get("name", "unnamed"),
-            "query": s["query"],
-            "days": args.days if args.days is not None else s.get("days", defaults.get("days", 30)),
-            "max_results": args.max if args.max is not None else s.get("max_results", defaults.get("max_results", 200)),
-            "datetype": args.datetype or s.get("datetype", defaults.get("datetype", "pdat")),
-        })
+        searches.append(resolve_search(s, defaults, **overrides))
     return searches
+
+
+# --------------------------------------------------------------------------- #
+# Interactive mode
+# --------------------------------------------------------------------------- #
+class Cancelled(Exception):
+    """Raised when the user ends input (Ctrl-C / Ctrl-D) during the prompts."""
+
+
+def _ask(prompt: str, default: str = "") -> str:
+    suffix = f" [{default}]" if default else ""
+    try:
+        answer = input(f"{prompt}{suffix}: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        raise Cancelled
+    return answer or default
+
+
+def _ask_int(prompt: str, default: int) -> int:
+    while True:
+        answer = _ask(prompt, str(default))
+        if answer.isdigit():
+            return int(answer)
+        print("  Please enter a whole number (0 or more).")
+
+
+def _ask_yes(prompt: str, default: bool) -> bool:
+    hint = "Y/n" if default else "y/N"
+    while True:
+        answer = _ask(f"{prompt} ({hint})").lower()
+        if not answer:
+            return default
+        if answer in ("y", "yes"):
+            return True
+        if answer in ("n", "no"):
+            return False
+        print("  Please answer y or n.")
+
+
+def _split_list(text: str) -> list[str]:
+    return [part.strip() for part in text.split(",") if part.strip()]
+
+
+def _slug(text: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
+    return slug[:40].rstrip("_") or "search"
+
+
+def build_query(topics: list[str], fields: list[str] = (),
+                journals: list[str] = ()) -> str:
+    """
+    Turn plain-language answers into a PubMed query:
+      topics   -> any of these phrases in the title/abstract
+      fields   -> AND within any of these fields (MeSH heading or title/abstract)
+      journals -> AND published in any of these journals
+    A topic that already contains a [field tag] is treated as raw PubMed syntax.
+    """
+    def quoted(term: str) -> str:
+        return '"' + term.replace('"', "") + '"'
+
+    def any_of(clauses: Iterable[str]) -> str:
+        return "(" + " OR ".join(clauses) + ")"
+
+    parts = [any_of(f"({t})" if "[" in t else f"{quoted(t)}[Title/Abstract]"
+                    for t in topics)]
+    if fields:
+        parts.append(any_of(f"{quoted(f)}[MeSH Terms] OR {quoted(f)}[Title/Abstract]"
+                            for f in fields))
+    if journals:
+        parts.append(any_of(f"{quoted(j)}[Journal]" for j in journals))
+    return " AND ".join(parts)
+
+
+def save_search(config_path: Path, name: str, query: str, days: int) -> bool:
+    """
+    Append a search to the YAML config as text, so the file's comments survive.
+    The result is parsed before writing; returns False (file untouched) if the
+    appended entry wouldn't load back as a search.
+    """
+    original = (config_path.read_text(encoding="utf-8")
+                if config_path.exists() else "searches:\n")
+    updated = original if original.endswith("\n") else original + "\n"
+    updated += (f"\n  - name: {json.dumps(name)}\n"
+                f"    enabled: true\n"
+                f"    days: {days}\n"
+                f"    query: {json.dumps(query)}\n")
+    try:
+        data = yaml.safe_load(updated) or {}
+    except yaml.YAMLError:
+        return False
+    if name not in [s.get("name") for s in data.get("searches") or []]:
+        return False
+    config_path.write_text(updated, encoding="utf-8")
+    return True
+
+
+def _new_search(config: dict, config_path: Path, args) -> list[dict]:
+    defaults = config.get("defaults", {})
+
+    print("\nEnter search terms separated by commas. Articles mentioning ANY of")
+    print("them in the title or abstract are included.")
+    print("  e.g.  scRNA-seq, single cell RNA sequencing, single-cell transcriptomics")
+    topics: list[str] = []
+    while not topics:
+        text = _ask("Search terms")
+        topics = [text] if "[" in text else _split_list(text)
+        if not topics:
+            print("  Please enter at least one term.")
+
+    print("\nOptionally narrow to a field (e.g. immunology, oncology, neuroscience).")
+    fields = _split_list(_ask("Field(s), or Enter for none"))
+
+    print("\nOptionally restrict to specific journals (e.g. Nature, Cell, Immunity).")
+    journals = _split_list(_ask("Journal(s), or Enter for all"))
+
+    days = _ask_int("\nHow many days back? (0 = no limit)",
+                    args.days if args.days is not None else defaults.get("days", 30))
+
+    query = build_query(topics, fields, journals)
+    print(f"\nPubMed query:\n  {query}")
+
+    # Default name from the inputs, kept distinct from saved searches so the
+    # two don't share an entry in the seen-cache.
+    existing = {s.get("name") for s in config.get("searches", [])}
+    base = args.name or _slug("_".join(topics[:1] + fields[:1]))
+    name, n = base, 2
+    while name in existing:
+        name, n = f"{base}_{n}", n + 1
+
+    if _ask_yes("\nSave this search so you can re-run it later?", default=False):
+        suggestion = name
+        while True:
+            name = _slug(_ask("Name for this search", suggestion))
+            if name not in existing:
+                break
+            print(f"  A saved search called '{name}' already exists — pick another name.")
+        if save_search(config_path, name, query, days):
+            print(f"  Saved to {config_path} as '{name}'.")
+        else:
+            print(f"  Couldn't add it to {config_path} automatically; running it anyway.")
+
+    search = {"name": name, "query": query}
+    return [resolve_search(search, defaults, days=days, max_results=args.max,
+                           datetype=args.datetype)]
+
+
+def _saved_searches(config: dict, args) -> list[dict]:
+    defaults = config.get("defaults", {})
+    saved = [s for s in config.get("searches", []) if s.get("query")]
+
+    print("\nSaved searches:")
+    for i, s in enumerate(saved, 1):
+        note = "" if s.get("enabled", True) else "  (disabled)"
+        print(f"  {i}) {s.get('name', 'unnamed')}{note}")
+
+    while True:
+        text = _ask("Which ones? Numbers separated by commas, or Enter for all enabled")
+        picks = _split_list(text)
+        if not picks:
+            chosen = [s for s in saved if s.get("enabled", True)]
+        elif all(p.isdigit() and 1 <= int(p) <= len(saved) for p in picks):
+            chosen = [saved[int(p) - 1] for p in picks]
+        else:
+            print(f"  Please enter numbers between 1 and {len(saved)}.")
+            continue
+        if chosen:
+            break
+        print("  None of the saved searches are enabled — pick some by number.")
+
+    days: int | None = args.days
+    while days is None:
+        text = _ask("How many days back? (0 = no limit, Enter = each search's own setting)")
+        if not text:
+            break
+        if text.isdigit():
+            days = int(text)
+        else:
+            print("  Please enter a whole number (0 or more).")
+
+    return [resolve_search(s, defaults, days=days, max_results=args.max,
+                           datetype=args.datetype) for s in chosen]
+
+
+def interactive_session(config: dict, args) -> tuple[list[dict], bool]:
+    """Ask the user what to search for. Returns (searches, only_new_articles)."""
+    print("\nPubMed article finder")
+    print("=" * 40)
+
+    has_saved = any(s.get("query") for s in config.get("searches", []))
+    choice = "1"
+    if has_saved:
+        print("\nWhat would you like to do?")
+        print("  1) Enter a new search")
+        print("  2) Run saved searches")
+        choice = _ask("Choose 1 or 2", "1")
+        while choice not in ("1", "2"):
+            choice = _ask("Please choose 1 or 2", "1")
+
+    if choice == "2":
+        searches = _saved_searches(config, args)
+    else:
+        searches = _new_search(config, Path(args.config), args)
+
+    only_new = _ask_yes("\nSkip articles already reported by an earlier run?",
+                        default=not args.all)
+    print()
+    return searches, only_new
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -520,6 +737,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__.split("Examples")[1] if "Examples" in __doc__ else "",
     )
+    p.add_argument("-i", "--interactive", action="store_true",
+                   help="Ask for search terms, field, journals and date range "
+                        "step by step instead of reading them from the config.")
     p.add_argument("--config", default=DEFAULT_CONFIG,
                    help=f"Path to the YAML search config (default: {DEFAULT_CONFIG}).")
     p.add_argument("--search", metavar="NAME",
@@ -561,7 +781,16 @@ def main(argv: list[str]) -> int:
 
     defaults = config.get("defaults", {})
     email = args.email or defaults.get("email", "")
-    searches = build_search_list(config, args)
+
+    if args.interactive:
+        try:
+            searches, use_cache = interactive_session(config, args)
+        except Cancelled:
+            print("Cancelled.", file=sys.stderr)
+            return 130
+    else:
+        searches = build_search_list(config, args)
+        use_cache = not args.all
 
     if not searches:
         print("No searches to run. Check --search/--query or your config's "
@@ -570,7 +799,6 @@ def main(argv: list[str]) -> int:
 
     client = PubMedClient(email=email, api_key=args.api_key)
 
-    use_cache = not args.all
     cache_path = Path(args.cache_file)
     seen = load_seen(cache_path) if use_cache else {}
 
@@ -618,9 +846,13 @@ def main(argv: list[str]) -> int:
     print(f"\nDone. {total_new} new article(s) across {len(searches)} search(es).",
           file=sys.stderr)
     for path in written:
-        print(f"  wrote {path}", file=sys.stderr)
+        print(f"  wrote {Path(path).resolve()}", file=sys.stderr)
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except KeyboardInterrupt:
+        print("\nCancelled.", file=sys.stderr)
+        sys.exit(130)
